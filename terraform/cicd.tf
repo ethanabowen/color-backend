@@ -25,14 +25,15 @@ resource "aws_iam_policy" "github_actions" {
           # Lambda functions  
           "lambda:UpdateFunctionCode",
           "lambda:UpdateFunctionConfiguration",
-          # API Gateway
-          "apigateway:PutRestApi",
-          "apigateway:PostToConnection",
           # DynamoDB table
           "dynamodb:PutItem",
           "dynamodb:GetItem",
           "dynamodb:Query",
-          "dynamodb:Scan"
+          "dynamodb:Scan",
+          # DynamoDB state locking
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem"
         ]
         Resource = [
           # Terraform state bucket
@@ -46,7 +47,9 @@ resource "aws_iam_policy" "github_actions" {
           "${aws_lambda_function.search_colors.arn}",
           "${aws_apigatewayv2_api.lambda_api.execution_arn}/*",
           # DynamoDB table
-          aws_dynamodb_table.app_table.arn
+          aws_dynamodb_table.app_table.arn,
+          # DynamoDB state locking table
+          "arn:aws:dynamodb:us-east-1:859700905691:table/awsplayground-terraform-locks"
         ]
       }
     ]
