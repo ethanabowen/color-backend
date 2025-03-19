@@ -53,10 +53,9 @@ resource "aws_iam_policy" "github_actions" {
           "${aws_apigatewayv2_api.lambda_api.arn}",
           "${aws_apigatewayv2_api.lambda_api.arn}/*",
           "${aws_apigatewayv2_api.lambda_api.execution_arn}/*",
-          # Lambda functions
+          # Lambda functions + role
           "${aws_lambda_function.submit_color.arn}",
-          "${aws_lambda_function.search_colors.arn}"
-          # Lambda role
+          "${aws_lambda_function.search_colors.arn}",
           "${aws_iam_role.lambda_exec.arn}"
 
           # DynamoDB table
