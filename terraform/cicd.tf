@@ -18,12 +18,15 @@ resource "aws_iam_policy" "github_actions" {
         Effect = "Allow"
         Action = [
           # S3 - Terraform state bucket
-          "s3:ListObjectsV2",
+          "s3:ListBucket",
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
           # S3 - Website bucket
           "s3:PutObject",
           "s3:GetObject",
           "s3:DeleteObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
           # Lambda functions  
           "lambda:UpdateFunctionCode",
           "lambda:UpdateFunctionConfiguration",
