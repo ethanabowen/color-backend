@@ -2,6 +2,9 @@ provider "aws" {
   region = var.aws_region
 }
 
+# Get current region
+data "aws_region" "current" {}
+
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
   common_tags = merge(
@@ -55,8 +58,10 @@ resource "aws_s3_bucket_public_access_block" "app_bucket_public_access" {
 
 # DynamoDB table
 resource "aws_dynamodb_table" "app_table" {
-  name           = "${local.name_prefix}-table"
-  billing_mode   = "PAY_PER_REQUEST"
+  name           = "${var.project_name}-${var.environment}-table"
+  billing_mode   = var.dynamodb_billing_mode
+  read_capacity  = var.dynamodb_billing_mode == "PROVISIONED" ? var.dynamodb_read_capacity : null
+  write_capacity = var.dynamodb_billing_mode == "PROVISIONED" ? var.dynamodb_write_capacity : null
   hash_key       = "id"
 
   attribute {
@@ -64,7 +69,10 @@ resource "aws_dynamodb_table" "app_table" {
     type = "S"
   }
 
-  tags = local.common_tags
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+  }
 
   point_in_time_recovery {
     enabled = true

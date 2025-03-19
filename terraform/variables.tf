@@ -1,22 +1,42 @@
-variable "environment" {
-  description = "Environment name (dev, test, prod)"
+variable "project_name" {
+  description = "Name of the project"
   type        = string
+  default     = "ethan-aws-playground-example"
+}
+
+variable "environment" {
+  description = "Environment (dev, staging, prod)"
+  type        = string
+  default     = "dev"
   validation {
     condition     = contains(["dev", "test", "prod"], var.environment)
     error_message = "Environment must be one of: dev, test, prod"
   }
 }
 
-variable "project_name" {
-  description = "Name of the project"
-  type        = string
-  default     = "favorite-color"
-}
-
 variable "aws_region" {
-  description = "AWS region to deploy resources"
+  description = "AWS region"
   type        = string
   default     = "us-east-1"
+}
+
+# DynamoDB table settings
+variable "dynamodb_billing_mode" {
+  description = "DynamoDB billing mode"
+  type        = string
+  default     = "PAY_PER_REQUEST"
+}
+
+variable "dynamodb_read_capacity" {
+  description = "DynamoDB read capacity units"
+  type        = number
+  default     = 5
+}
+
+variable "dynamodb_write_capacity" {
+  description = "DynamoDB write capacity units"
+  type        = number
+  default     = 5
 }
 
 variable "tags" {
@@ -27,14 +47,4 @@ variable "tags" {
     Environment = "dev"
     Project     = "FavoriteColor"
   }
-}
-
-variable "domain_name" {
-  description = "Domain name for the website"
-  type        = string
-}
-
-variable "route53_zone_id" {
-  description = "Route53 hosted zone ID for the domain"
-  type        = string
 } 

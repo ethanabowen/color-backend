@@ -27,7 +27,6 @@ The backend infrastructure is managed using Terraform and includes:
 Required environment variables:
 - `AWS_REGION`: AWS region for deployment (default: us-east-1)
 - `ENVIRONMENT`: Environment name (dev, test, prod)
-- `DOMAIN_NAME`: Domain name for the website
 - `ROUTE53_ZONE_ID`: Route53 hosted zone ID
 
 ## Development Setup
@@ -112,7 +111,6 @@ Required environment variables:
    terraform apply \
      -var="environment=dev" \
      -var="project_name=favorite-color" \
-     -var="domain_name=your-domain.com" \
      -var="route53_zone_id=your-zone-id"
    ```
 
