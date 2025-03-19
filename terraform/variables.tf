@@ -5,9 +5,13 @@ variable "project_name" {
 }
 
 variable "environment" {
-  description = "Environment name (e.g., dev, staging, prod)"
+  description = "Environment (dev, staging, prod)"
   type        = string
   default     = "dev"
+  validation {
+    condition     = contains(["dev", "test", "prod"], var.environment)
+    error_message = "Environment must be one of: dev, test, prod"
+  }
 }
 
 variable "aws_region" {
@@ -19,7 +23,6 @@ variable "aws_region" {
 variable "aws_account_id" {
   description = "AWS Account ID"
   type        = string
-  default     = "859700905691"
 }
 
 # DynamoDB table settings

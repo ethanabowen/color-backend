@@ -37,7 +37,7 @@ resource "aws_iam_policy" "github_actions" {
           "arn:aws:s3:::awsplayground-terraform-state",
           "arn:aws:s3:::awsplayground-terraform-state/*",
           # Terraform state locking table
-          "arn:aws:dynamodb:us-east-1:${var.aws_account_id}:table/awsplayground-terraform-locks",
+          "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/awsplayground-terraform-locks",
           # Website bucket
           "${aws_s3_bucket.website.arn}/*",
           aws_s3_bucket.website.arn,
