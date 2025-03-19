@@ -4,11 +4,11 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'favorite-color-backend/**'
+      - '**'
   pull_request:
     branches: [ main ]
     paths:
-      - 'favorite-color-backend/**'
+      - '**'
 
 env:
   AWS_REGION: us-east-1
@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: favorite-color-backend
+        working-directory: .
 
     steps:
       - uses: actions/checkout@v4
@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: favorite-color-backend
+        working-directory: .
 
     steps:
       - uses: actions/checkout@v4
