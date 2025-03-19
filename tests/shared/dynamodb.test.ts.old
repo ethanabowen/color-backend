@@ -1,0 +1,225 @@
+// import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+// import { DynamoDB } from 'aws-sdk';
+// import {
+//   getRecord,
+//   saveRecord,
+//   updateColors,
+//   saveColorSubmission,
+//   searchColors,
+// } from '../../src/shared/dynamodb';
+// import { ColorRecord, ColorSubmission, DynamoDBRecord } from '../../src/shared/types';
+
+// type DynamoDBResponse<T> = {
+//   Item?: T | null;
+//   Items?: T[];
+//   Attributes?: Partial<T>;
+// };
+
+// type MockDynamoDBClient = {
+//   get: jest.Mock;
+//   put: jest.Mock;
+//   update: jest.Mock;
+//   scan: jest.Mock;
+//   promise: jest.Mock;
+// };
+
+// // Create a single mock instance for all tests
+// const mockDynamoDB = {
+//   get: jest.fn().mockReturnThis(),
+//   put: jest.fn().mockReturnThis(),
+//   update: jest.fn().mockReturnThis(),
+//   scan: jest.fn().mockReturnThis(),
+//   promise: jest.fn().mockImplementation(() => Promise.resolve({})),
+// } as MockDynamoDBClient;
+
+// // Mock AWS SDK once
+// jest.mock('aws-sdk', () => ({
+//   DynamoDB: {
+//     DocumentClient: jest.fn().mockImplementation(() => mockDynamoDB),
+//   },
+// }));
+
+// describe('DynamoDB Utilities', () => {
+//   beforeEach(() => {
+//     jest.clearAllMocks();
+//   });
+
+//   describe('getRecord', () => {
+//     it('should return a record when found', async () => {
+//       const mockRecord: ColorRecord = {
+//         id: '123',
+//         colors: ['blue'],
+//       };
+//       mockDynamoDB.promise.mockResolvedValueOnce({ Item: mockRecord } as never);
+
+//       const result = await getRecord('123');
+
+//       expect(result).toEqual(mockRecord);
+//       expect(mockDynamoDB.get).toHaveBeenCalledWith({
+//         TableName: 'FavoriteColors',
+//         Key: { id: '123' },
+//       });
+//     });
+
+//     it('should return null when record not found', async () => {
+//       mockDynamoDB.promise.mockResolvedValueOnce({ Item: null } as never);
+
+//       const result = await getRecord('123');
+
+//       expect(result).toBeNull();
+//     });
+
+//     it('should throw error when DynamoDB operation fails', async () => {
+//       mockDynamoDB.promise.mockRejectedValueOnce(new Error('DynamoDB error') as never);
+
+//       await expect(getRecord('123')).rejects.toThrow('DynamoDB error');
+//     });
+//   });
+
+//   describe('saveRecord', () => {
+//     it('should save a record successfully', async () => {
+//       const mockRecord: ColorRecord = {
+//         id: '123',
+//         colors: ['blue'],
+//       };
+//       mockDynamoDB.promise.mockResolvedValueOnce({} as never);
+
+//       await saveRecord(mockRecord);
+
+//       expect(mockDynamoDB.put).toHaveBeenCalledWith({
+//         TableName: 'FavoriteColors',
+//         Item: mockRecord,
+//       });
+//     });
+
+//     it('should throw error when DynamoDB operation fails', async () => {
+//       const mockRecord: ColorRecord = {
+//         id: '123',
+//         colors: ['blue'],
+//       };
+//       mockDynamoDB.promise.mockRejectedValueOnce(new Error('DynamoDB error') as never);
+
+//       await expect(saveRecord(mockRecord)).rejects.toThrow('DynamoDB error');
+//     });
+//   });
+
+//   describe('updateColors', () => {
+//     it('should update colors list successfully', async () => {
+//       const mockColors = ['blue', 'red'];
+//       mockDynamoDB.promise.mockResolvedValueOnce({
+//         Attributes: { colors: mockColors },
+//       } as never);
+
+//       const result = await updateColors('123', 'red');
+
+//       expect(result).toEqual(mockColors);
+//       expect(mockDynamoDB.update).toHaveBeenCalledWith({
+//         TableName: 'FavoriteColors',
+//         Key: { id: '123' },
+//         UpdateExpression: 'SET colors = list_append(if_not_exists(colors, :empty_list), :new_color)',
+//         ExpressionAttributeValues: {
+//           ':empty_list': [],
+//           ':new_color': ['red'],
+//         },
+//         ReturnValues: 'UPDATED_NEW',
+//       });
+//     });
+
+//     it('should throw error when DynamoDB operation fails', async () => {
+//       mockDynamoDB.promise.mockRejectedValueOnce(new Error('DynamoDB error') as never);
+
+//       await expect(updateColors('123', 'red')).rejects.toThrow('DynamoDB error');
+//     });
+//   });
+
+//   describe('saveColorSubmission', () => {
+//     it('should save a color submission successfully', async () => {
+//       const mockSubmission: ColorSubmission = {
+//         firstName: 'John',
+//         favoriteColor: 'blue',
+//       };
+//       const mockTimestamp = new Date().toISOString();
+//       jest.spyOn(Date.prototype, 'toISOString').mockReturnValue(mockTimestamp);
+
+//       const result = await saveColorSubmission(mockSubmission);
+
+//       expect(result).toEqual({
+//         ...mockSubmission,
+//         timestamp: mockTimestamp,
+//       });
+//       expect(mockDynamoDB.put).toHaveBeenCalledWith({
+//         TableName: 'FavoriteColors',
+//         Item: {
+//           ...mockSubmission,
+//           timestamp: mockTimestamp,
+//         },
+//       });
+//     });
+
+//     it('should throw error when DynamoDB operation fails', async () => {
+//       const mockSubmission: ColorSubmission = {
+//         firstName: 'John',
+//         favoriteColor: 'blue',
+//       };
+//       mockDynamoDB.promise.mockRejectedValueOnce(new Error('DynamoDB error') as never);
+
+//       await expect(saveColorSubmission(mockSubmission)).rejects.toThrow('DynamoDB error');
+//     });
+//   });
+
+//   describe('searchColors', () => {
+//     it('should search colors with firstName filter', async () => {
+//       const mockResults: DynamoDBRecord[] = [
+//         {
+//           firstName: 'John',
+//           favoriteColor: 'blue',
+//           timestamp: new Date().toISOString(),
+//         },
+//       ];
+//       mockDynamoDB.promise.mockResolvedValueOnce({ Items: mockResults } as never);
+
+//       const result = await searchColors('John');
+
+//       expect(result).toEqual(mockResults);
+//       expect(mockDynamoDB.scan).toHaveBeenCalledWith({
+//         TableName: 'FavoriteColors',
+//         FilterExpression: 'begins_with(firstName, :firstName)',
+//         ExpressionAttributeValues: {
+//           ':firstName': 'John',
+//         },
+//       });
+//     });
+
+//     it('should search colors without filter', async () => {
+//       const mockResults: DynamoDBRecord[] = [
+//         {
+//           firstName: 'John',
+//           favoriteColor: 'blue',
+//           timestamp: new Date().toISOString(),
+//         },
+//       ];
+//       mockDynamoDB.promise.mockResolvedValueOnce({ Items: mockResults } as never);
+
+//       const result = await searchColors();
+
+//       expect(result).toEqual(mockResults);
+//       expect(mockDynamoDB.scan).toHaveBeenCalledWith({
+//         TableName: 'FavoriteColors',
+//       });
+//     });
+
+//     it('should return empty array when no results found', async () => {
+//       mockDynamoDB.promise.mockResolvedValueOnce({ Items: [] } as never);
+
+//       const result = await searchColors();
+
+//       expect(result).toEqual([]);
+//     });
+
+//     it('should throw error when DynamoDB operation fails', async () => {
+//       mockDynamoDB.promise.mockRejectedValueOnce(new Error('DynamoDB error') as never);
+
+//       await expect(searchColors()).rejects.toThrow('DynamoDB error');
+//     });
+//   });
+// }); 
