@@ -17,20 +17,28 @@ resource "aws_iam_policy" "github_actions" {
       {
         Effect = "Allow"
         Action = [
+          # IAM
+          "iam:GetRole",
+          "iam:GetUser",
           # S3 - Terraform state bucket + App buckets
-          "s3:PutObject",
-          "s3:GetObject",
           "s3:DeleteObject",
+          "s3:GetBucketPolicy",
+          "s3:GetBucketVersioning",
+          "s3:GetEncryptionConfiguration",
+          "s3:GetObject",
+          "s3:GetBucketPublicAccessBlock",
           "s3:ListBucket",
+          "s3:PutObject",
           # Lambda functions  
           "lambda:UpdateFunctionCode",
           "lambda:UpdateFunctionConfiguration",
-          # DynamoDB - Terraform state lcosk + App Tables
-          "dynamodb:PutItem",
+          # DynamoDB - Terraform state locks + App Tables
+          "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable",
           "dynamodb:GetItem",
+          "dynamodb:PutItem",
           "dynamodb:Query",
-          "dynamodb:Scan",
-          "dynamodb:DeleteItem"
+          "dynamodb:Scan"
         ]
         Resource = [
           # Terraform state bucket
@@ -41,10 +49,16 @@ resource "aws_iam_policy" "github_actions" {
           # Website bucket
           "${aws_s3_bucket.website.arn}/*",
           aws_s3_bucket.website.arn,
+          # Api Gateway
+          "${aws_apigatewayv2_api.lambda_api.arn}",
+          "${aws_apigatewayv2_api.lambda_api.arn}/*",
+          "${aws_apigatewayv2_api.lambda_api.execution_arn}/*",
           # Lambda functions
           "${aws_lambda_function.submit_color.arn}",
-          "${aws_lambda_function.search_colors.arn}",
-          "${aws_apigatewayv2_api.lambda_api.execution_arn}/*",
+          "${aws_lambda_function.search_colors.arn}"
+          # Lambda role
+          "${aws_iam_role.lambda_exec.arn}"
+
           # DynamoDB table
           aws_dynamodb_table.app_table.arn
         ]
