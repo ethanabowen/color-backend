@@ -22,6 +22,7 @@ resource "aws_iam_policy" "github_actions" {
           "s3:GetObject",
           "s3:DeleteObject",
           "s3:ListBucket",
+          "s3:ListObjectsV2",
           # Lambda functions  
           "lambda:UpdateFunctionCode",
           "lambda:UpdateFunctionConfiguration",
