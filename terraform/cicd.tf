@@ -31,11 +31,17 @@ resource "aws_iam_policy" "github_actions" {
           "dynamodb:Scan"
         ]
         Resource = [
+          # Terraform state bucket
+          "arn:aws:s3:::awsplayground-terraform-state",
+          "arn:aws:s3:::awsplayground-terraform-state/*",
+          # Website bucket
           "${aws_s3_bucket.website.arn}/*",
           aws_s3_bucket.website.arn,
+          # Lambda functions
           "${aws_lambda_function.submit_color.arn}",
           "${aws_lambda_function.search_colors.arn}",
           "${aws_apigatewayv2_api.lambda_api.execution_arn}/*",
+          # DynamoDB table
           aws_dynamodb_table.app_table.arn
         ]
       }
