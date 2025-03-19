@@ -1,23 +1,25 @@
 variable "project_name" {
   description = "Name of the project"
   type        = string
-  default     = "ethan-aws-playground-example"
+  default     = "favorite-color"
 }
 
 variable "environment" {
-  description = "Environment (dev, staging, prod)"
+  description = "Environment name (e.g., dev, staging, prod)"
   type        = string
   default     = "dev"
-  validation {
-    condition     = contains(["dev", "test", "prod"], var.environment)
-    error_message = "Environment must be one of: dev, test, prod"
-  }
 }
 
 variable "aws_region" {
   description = "AWS region"
   type        = string
   default     = "us-east-1"
+}
+
+variable "aws_account_id" {
+  description = "AWS Account ID"
+  type        = string
+  default     = "859700905691"
 }
 
 # DynamoDB table settings
