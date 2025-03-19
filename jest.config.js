@@ -6,13 +6,11 @@ module.exports = {
   },
   testMatch: ['**/tests/**/*.test.ts'],
   setupFiles: ['<rootDir>/tests/setup.ts'],
-  // Run tests sequentially to reduce overhead
-  maxWorkers: 1,
+  // # of tests to run in parallel
+  maxWorkers: 5,
   // Cache test results
   cache: true,
   // Show test coverage
   collectCoverage: true,
-  coverageDirectory: 'coverage',
-  // Only run tests that have changed since last run
-  onlyChanged: true,
+  coverageDirectory: 'coverage'
 }; 
