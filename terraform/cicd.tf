@@ -87,11 +87,6 @@ resource "aws_iam_policy" "github_actions" {
           "dynamodb:UpdateTable",
           "dynamodb:DescribeTableReplicaAutoScaling",
           "dynamodb:DescribeContinuousBackups",
-          # DynamoDB state locking
-          "dynamodb:GetItem",
-          "dynamodb:PutItem",
-          "dynamodb:DeleteItem",
-          "dynamodb:UpdateItem"
         ]
         Resource = [
           # Terraform state bucket
