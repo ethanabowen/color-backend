@@ -38,7 +38,7 @@ resource "aws_iam_policy" "github_actions" {
           # S3 - Terraform state bucket + App buckets
           "s3:DeleteObject",
           "s3:GetBucketCORS",
-   				"s3:GetBucketLocation", 
+          "s3:GetBucketLocation", 
           "s3:GetBucketLogging",
           "s3:GetBucketObjectLockConfiguration",
           "s3:GetBucketPolicy",
@@ -46,7 +46,7 @@ resource "aws_iam_policy" "github_actions" {
           "s3:GetBucketTagging" ,
           "s3:GetBucketVersioning",
           "s3:GetEncryptionConfiguration",
-				  "s3:GetLifecycleConfiguration",
+          "s3:GetLifecycleConfiguration",
           "s3:GetReplicationConfiguration",
           "s3:GetObject",
           "s3:GetBucketPublicAccessBlock",
@@ -86,7 +86,7 @@ resource "aws_iam_policy" "github_actions" {
           "dynamodb:BatchWriteItem",
           "dynamodb:UpdateTable",
           "dynamodb:DescribeTableReplicaAutoScaling",
-          "dynamodb:DescribeContinuousBackups",
+          "dynamodb:DescribeContinuousBackups"
         ]
         Resource = [
           # Terraform state bucket
