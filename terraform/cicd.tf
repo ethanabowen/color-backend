@@ -39,6 +39,7 @@ resource "aws_iam_policy" "github_actions" {
           "s3:ListBucket",
           "s3:PutObject",
           "s3:GetBucketAcl",
+          "s3:GetBucketWebsite"
           # AWS Gateway
           "apigateway:GET",
           "apigateway:POST",
@@ -46,6 +47,7 @@ resource "aws_iam_policy" "github_actions" {
           "apigateway:DELETE",
           # Lambda functions
           "lambda:GetFunction",
+          "lambda:GetFunctionConfiguration",
           "lambda:ListFunctions",
           "lambda:ListVersionsByFunction",
           "lambda:UpdateFunctionCode",
@@ -83,6 +85,9 @@ resource "aws_iam_policy" "github_actions" {
           # Website bucket
           aws_s3_bucket.website.arn,
           "${aws_s3_bucket.website.arn}/*",
+          # Lambda functions bucket
+          aws_s3_bucket.functions_bucket.arn,
+          "${aws_s3_bucket.functions_bucket.arn}/*",
           # Api Gateway
           aws_apigatewayv2_api.lambda_api.arn,
           "${aws_apigatewayv2_api.lambda_api.arn}/*",
@@ -95,11 +100,7 @@ resource "aws_iam_policy" "github_actions" {
           aws_dynamodb_table.app_table.arn,
           "${aws_dynamodb_table.app_table.arn}/index/*",
           # IAM resources
-          aws_iam_user.github_actions.arn,
-          #"arn:aws:iam::${var.aws_account_id}:role/*",
-          # S3 buckets
-          #"arn:aws:s3:::${var.project_name}-${var.environment}-*",
-          #"arn:aws:s3:::${var.project_name}-${var.environment}-*/*"
+          aws_iam_user.github_actions.arn
         ]
       }
     ]

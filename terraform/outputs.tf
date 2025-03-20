@@ -1,11 +1,11 @@
-output "s3_bucket_name" {
-  description = "Name of the S3 bucket"
-  value       = aws_s3_bucket.app_bucket.id
+output "functions_bucket_name" {
+  description = "Name of the Lambda functions bucket"
+  value       = aws_s3_bucket.functions_bucket.id
 }
 
-output "s3_bucket_arn" {
-  description = "ARN of the S3 bucket"
-  value       = aws_s3_bucket.app_bucket.arn
+output "functions_bucket_arn" {
+  description = "ARN of the Lambda functions bucket"
+  value       = aws_s3_bucket.functions_bucket.arn
 }
 
 output "dynamodb_table_name" {
