@@ -33,12 +33,13 @@ resource "aws_iam_policy" "github_actions" {
           "lambda:UpdateFunctionCode",
           "lambda:UpdateFunctionConfiguration",
           # DynamoDB - Terraform state locks + App Tables
-          "dynamodb:DeleteItem",
+          "dynamodb:CreateTable",
+          "dynamodb:DeleteTable",
           "dynamodb:DescribeTable",
           "dynamodb:GetItem",
           "dynamodb:PutItem",
-          "dynamodb:Query",
-          "dynamodb:Scan"
+          "dynamodb:DeleteItem",
+          "dynamodb:UpdateItem"
         ]
         Resource = [
           # Terraform state bucket
@@ -56,7 +57,7 @@ resource "aws_iam_policy" "github_actions" {
           # Lambda functions + role
           "${aws_lambda_function.submit_color.arn}",
           "${aws_lambda_function.search_colors.arn}",
-          "${aws_iam_role.lambda_exec.arn}",
+          "${aws_iam_role.lambda_role.arn}",
 
           # DynamoDB table
           aws_dynamodb_table.app_table.arn
