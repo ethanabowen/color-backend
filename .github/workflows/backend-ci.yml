@@ -13,7 +13,6 @@ on:
 env:
   AWS_REGION: us-east-1
   ENVIRONMENT: dev
-  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
 jobs:
   test:
@@ -78,11 +77,11 @@ jobs:
       - name: Set AWS Account ID based on environment
         run: |
           if [ "${{ env.ENVIRONMENT }}" = "dev" ]; then
-            echo "AWS_ACCOUNT_ID=${{ vars.AWS_ACCOUNT_ID_DEV }}" >> $GITHUB_ENV
+            echo "AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID_DEV }}" >> $GITHUB_ENV
           elif [ "${{ env.ENVIRONMENT }}" = "test" ]; then
-            echo "AWS_ACCOUNT_ID=${{ vars.AWS_ACCOUNT_ID_TEST }}" >> $GITHUB_ENV
+            echo "AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID_TEST }}" >> $GITHUB_ENV
           else
-            echo "AWS_ACCOUNT_ID=${{ vars.AWS_ACCOUNT_ID_PROD }}" >> $GITHUB_ENV
+            echo "AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID_PROD }}" >> $GITHUB_ENV
           fi
 
       - name: Deploy infrastructure
