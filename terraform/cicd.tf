@@ -40,6 +40,7 @@ resource "aws_iam_policy" "github_actions" {
           "s3:PutObject",
           "s3:GetBucketAcl",
           "s3:GetBucketWebsite",
+          "s3:GetAccelerateConfiguration",
           # AWS Gateway
           "apigateway:GET",
           "apigateway:POST",
@@ -49,6 +50,7 @@ resource "aws_iam_policy" "github_actions" {
           "lambda:GetFunction",
           "lambda:GetFunctionCodeSigningConfig",
           "lambda:GetFunctionConfiguration",
+          "lambda:GetPolicy",
           "lambda:ListFunctions",
           "lambda:ListVersionsByFunction",
           "lambda:UpdateFunctionCode",
