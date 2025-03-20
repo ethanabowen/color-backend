@@ -7,12 +7,12 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-# # Check if gh CLI is installed
-# if ! command -v gh &> /dev/null; then
-#     echo "GitHub CLI is not installed. Please install it first:"
-#     echo "https://cli.github.com/manual/installation"
-#     exit 1
-# fi
+# Check if gh CLI is installed
+if ! which gh > /dev/null 2>&1; then
+    echo "GitHub CLI is not installed. Please install it first:"
+    echo "https://cli.github.com/manual/installation"
+    exit 1
+fi
 
 # Check if user is logged in to GitHub
 if ! gh auth status &> /dev/null; then
@@ -23,7 +23,7 @@ fi
 
 # Get AWS credentials from Terraform output
 echo "Getting AWS credentials from Terraform output..."
-cd terraform
+cd ../terraform || exit 1
 
 # Get and verify each output
 echo "Getting AWS_ACCESS_KEY_ID..."
@@ -53,7 +53,7 @@ cd ..
 echo "Setting GitHub Secrets..."
 gh secret set AWS_ACCESS_KEY_ID -b "$AWS_ACCESS_KEY_ID"
 gh secret set AWS_SECRET_ACCESS_KEY -b "$AWS_SECRET_ACCESS_KEY"
-gh secret set WEBSITE_BUCKET_NAME -b "$WEBSITE_BUCKET_NAME"
+gh secret set WEBSITE_BUCKET_NAME -b "$WEBSITE_BUCKET_NAME
 
 # Verify secrets were set
 echo "Verifying secrets..."
