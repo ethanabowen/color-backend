@@ -118,7 +118,7 @@ resource "aws_iam_policy" "github_actions" {
           "${aws_dynamodb_table.app_table.arn}/index/*",
           # IAM resources
           aws_iam_user.github_actions.arn,
-          aws_iam_policy.github_actions.arn
+          "arn:aws:iam::${var.aws_account_id}:policy/github-actions-policy"
         ]
       }
     ]
