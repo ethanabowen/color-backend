@@ -18,23 +18,36 @@ resource "aws_iam_policy" "github_actions" {
         Effect = "Allow"
         Action = [
           # IAM
+          "iam:CreatePolicy",
+          "iam:CreatePolicyVersion",
+          "iam:DeletePolicyVersion",
+          "iam:GetPolicy",
+          "iam:GetPolicyVersion",
           "iam:GetRole",
           "iam:GetUser",
           "iam:ListAccessKeys",
+          "iam;ListAttachedUserPolicies",
           "iam:ListRolePolicies",
           "iam:ListAttachedRolePolicies",
           "iam:PassRole",
           "iam:GetRolePolicy",
           "iam:GetUserPolicy",
+          "iam:ListPolicyVersions",
           "iam:ListRoles",
           "iam:ListUsers",
           # S3 - Terraform state bucket + App buckets
           "s3:DeleteObject",
           "s3:GetBucketCORS",
+   				"s3:GetBucketLocation", 
+          "s3:GetBucketLogging",
+          "s3:GetBucketObjectLockConfiguration",
           "s3:GetBucketPolicy",
           "s3:GetBucketRequestPayment",
+          "s3:GetBucketTagging" ,
           "s3:GetBucketVersioning",
           "s3:GetEncryptionConfiguration",
+				  "s3:GetLifecycleConfiguration",
+          "s3:GetReplicationConfiguration",
           "s3:GetObject",
           "s3:GetBucketPublicAccessBlock",
           "s3:ListBucket",
@@ -104,7 +117,8 @@ resource "aws_iam_policy" "github_actions" {
           aws_dynamodb_table.app_table.arn,
           "${aws_dynamodb_table.app_table.arn}/index/*",
           # IAM resources
-          aws_iam_user.github_actions.arn
+          aws_iam_user.github_actions.arn,
+          aws_iam_policy.github_actions.arn
         ]
       }
     ]
