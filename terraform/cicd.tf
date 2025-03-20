@@ -32,6 +32,11 @@ resource "aws_iam_policy" "github_actions" {
           "s3:ListBucket",
           "s3:PutObject",
           "s3:GetBucketAcl",
+          # AWS Gateway
+          "apigateway:GET",
+          "apigateway:POST",
+          "apigateway:PUT",
+          "apigateway:DELETE",
           # Lambda functions  
           "lambda:UpdateFunctionCode",
           "lambda:UpdateFunctionConfiguration",
@@ -53,8 +58,6 @@ resource "aws_iam_policy" "github_actions" {
           "dynamodb:BatchWriteItem",
           "dynamodb:UpdateTable",
           "dynamodb:DescribeTableReplicaAutoScaling",
-          "dynamodb:EnableTableReplicaAutoScaling",
-          "dynamodb:DisableTableReplicaAutoScaling",
           "dynamodb:DescribeContinuousBackups",
           # DynamoDB state locking
           "dynamodb:GetItem",
@@ -69,25 +72,25 @@ resource "aws_iam_policy" "github_actions" {
           # Terraform state locking table
           "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/awsplayground-terraform-locks",
           # Website bucket
-          "${aws_s3_bucket.website.arn}/*",
           aws_s3_bucket.website.arn,
+          "${aws_s3_bucket.website.arn}/*",
           # Api Gateway
-          "${aws_apigatewayv2_api.lambda_api.arn}",
+          aws_apigatewayv2_api.lambda_api.arn,
           "${aws_apigatewayv2_api.lambda_api.arn}/*",
           "${aws_apigatewayv2_api.lambda_api.execution_arn}/*",
           # Lambda functions + role
-          "${aws_lambda_function.submit_color.arn}",
-          "${aws_lambda_function.search_colors.arn}",
-          "${aws_iam_role.lambda_role.arn}",
+          aws_lambda_function.submit_color.arn,
+          aws_lambda_function.search_colors.arn,
+          aws_iam_role.lambda_role.arn,
           # DynamoDB table
           aws_dynamodb_table.app_table.arn,
           "${aws_dynamodb_table.app_table.arn}/index/*",
           # IAM resources
-          "arn:aws:iam::${var.aws_account_id}:user/github-actions-deployer",
-          "arn:aws:iam::${var.aws_account_id}:role/*",
+          aws_iam_user.github_actions.arn,
+          #"arn:aws:iam::${var.aws_account_id}:role/*",
           # S3 buckets
-          "arn:aws:s3:::${var.project_name}-${var.environment}-*",
-          "arn:aws:s3:::${var.project_name}-${var.environment}-*/*"
+          #"arn:aws:s3:::${var.project_name}-${var.environment}-*",
+          #"arn:aws:s3:::${var.project_name}-${var.environment}-*/*"
         ]
       }
     ]
