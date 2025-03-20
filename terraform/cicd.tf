@@ -78,7 +78,7 @@ resource "aws_iam_policy" "github_actions" {
           # Lambda functions + role
           "${aws_lambda_function.submit_color.arn}",
           "${aws_lambda_function.search_colors.arn}",
-          "${aws_iam_role.lambda_exec.arn}",
+          "${aws_iam_role.lambda_role.arn}",
           # DynamoDB table
           aws_dynamodb_table.app_table.arn,
           "${aws_dynamodb_table.app_table.arn}/index/*",
