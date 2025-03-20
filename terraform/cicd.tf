@@ -32,6 +32,7 @@ resource "aws_iam_policy" "github_actions" {
           "s3:DeleteObject",
           "s3:GetBucketCORS",
           "s3:GetBucketPolicy",
+          "s3:GetBucketRequestPayment",
           "s3:GetBucketVersioning",
           "s3:GetEncryptionConfiguration",
           "s3:GetObject",
