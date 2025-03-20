@@ -39,7 +39,7 @@ resource "aws_iam_policy" "github_actions" {
           "s3:ListBucket",
           "s3:PutObject",
           "s3:GetBucketAcl",
-          "s3:GetBucketWebsite"
+          "s3:GetBucketWebsite",
           # AWS Gateway
           "apigateway:GET",
           "apigateway:POST",
