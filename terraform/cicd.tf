@@ -20,6 +20,8 @@ resource "aws_iam_policy" "github_actions" {
           # IAM
           "iam:GetRole",
           "iam:GetUser",
+          "iam:ListRoles",
+          "iam:ListUsers",
           # S3 - Terraform state bucket + App buckets
           "s3:DeleteObject",
           "s3:GetBucketPolicy",
@@ -29,13 +31,32 @@ resource "aws_iam_policy" "github_actions" {
           "s3:GetBucketPublicAccessBlock",
           "s3:ListBucket",
           "s3:PutObject",
+          "s3:GetBucketAcl",
           # Lambda functions  
           "lambda:UpdateFunctionCode",
           "lambda:UpdateFunctionConfiguration",
+          "lambda:GetFunction",
+          "lambda:ListFunctions",
           # DynamoDB - Terraform state locks + App Tables
           "dynamodb:CreateTable",
           "dynamodb:DeleteTable",
           "dynamodb:DescribeTable",
+          "dynamodb:DescribeTimeToLive",
+          "dynamodb:ListTables",
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:BatchGetItem",
+          "dynamodb:BatchWriteItem",
+          "dynamodb:UpdateTable",
+          "dynamodb:DescribeTableReplicaAutoScaling",
+          "dynamodb:EnableTableReplicaAutoScaling",
+          "dynamodb:DisableTableReplicaAutoScaling",
+          "dynamodb:DescribeContinuousBackups",
+          # DynamoDB state locking
           "dynamodb:GetItem",
           "dynamodb:PutItem",
           "dynamodb:DeleteItem",
@@ -57,10 +78,16 @@ resource "aws_iam_policy" "github_actions" {
           # Lambda functions + role
           "${aws_lambda_function.submit_color.arn}",
           "${aws_lambda_function.search_colors.arn}",
-          "${aws_iam_role.lambda_role.arn}",
-
+          "${aws_iam_role.lambda_exec.arn}",
           # DynamoDB table
-          aws_dynamodb_table.app_table.arn
+          aws_dynamodb_table.app_table.arn,
+          "${aws_dynamodb_table.app_table.arn}/index/*",
+          # IAM resources
+          "arn:aws:iam::${var.aws_account_id}:user/github-actions-deployer",
+          "arn:aws:iam::${var.aws_account_id}:role/*",
+          # S3 buckets
+          "arn:aws:s3:::${var.project_name}-${var.environment}-*",
+          "arn:aws:s3:::${var.project_name}-${var.environment}-*/*"
         ]
       }
     ]
