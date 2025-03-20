@@ -26,7 +26,7 @@ resource "aws_iam_policy" "github_actions" {
           "iam:GetRole",
           "iam:GetUser",
           "iam:ListAccessKeys",
-          "iam;ListAttachedUserPolicies",
+          "iam:ListAttachedUserPolicies",
           "iam:ListRolePolicies",
           "iam:ListAttachedRolePolicies",
           "iam:PassRole",
