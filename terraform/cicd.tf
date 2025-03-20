@@ -47,6 +47,7 @@ resource "aws_iam_policy" "github_actions" {
           "apigateway:DELETE",
           # Lambda functions
           "lambda:GetFunction",
+          "lambda:GetFunctionCodeSigningConfig",
           "lambda:GetFunctionConfiguration",
           "lambda:ListFunctions",
           "lambda:ListVersionsByFunction",
