@@ -17,6 +17,37 @@ resource "aws_iam_policy" "github_actions" {
       {
         Effect = "Allow"
         Action = [
+          # AWS Gateway
+          "apigateway:DELETE",
+          "apigateway:GET",
+          "apigateway:POST",
+          "apigateway:PUT",
+          
+          # CloudFront
+          "cloudfront:GetCachePolicy",
+          "cloudfront:GetDistribution",
+          "cloudfront:GetOriginAccessControl",
+          "cloudfront:ListTagsForResource",
+          
+          # DynamoDB - Terraform state locks + App Tables
+          "dynamodb:BatchGetItem",
+          "dynamodb:BatchWriteItem",
+          "dynamodb:CreateTable", 
+          "dynamodb:DeleteItem",
+          "dynamodb:DeleteTable",
+          "dynamodb:DescribeContinuousBackups",
+          "dynamodb:DescribeTable",
+          "dynamodb:DescribeTableReplicaAutoScaling",
+          "dynamodb:DescribeTimeToLive",
+          "dynamodb:GetItem",
+          "dynamodb:ListTagsOfResource",
+          "dynamodb:ListTables",
+          "dynamodb:PutItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:UpdateItem",
+          "dynamodb:UpdateTable",
+          
           # IAM
           "iam:CreatePolicy",
           "iam:CreatePolicyVersion",
@@ -24,42 +55,18 @@ resource "aws_iam_policy" "github_actions" {
           "iam:GetPolicy",
           "iam:GetPolicyVersion",
           "iam:GetRole",
-          "iam:GetUser",
-          "iam:ListAccessKeys",
-          "iam:ListAttachedUserPolicies",
-          "iam:ListRolePolicies",
-          "iam:ListAttachedRolePolicies",
-          "iam:PassRole",
           "iam:GetRolePolicy",
+          "iam:GetUser",
           "iam:GetUserPolicy",
+          "iam:ListAccessKeys",
+          "iam:ListAttachedRolePolicies",
+          "iam:ListAttachedUserPolicies",
           "iam:ListPolicyVersions",
+          "iam:ListRolePolicies",
           "iam:ListRoles",
           "iam:ListUsers",
-          # S3 - Terraform state bucket + App buckets
-          "s3:DeleteObject",
-          "s3:GetBucketCORS",
-          "s3:GetBucketLocation", 
-          "s3:GetBucketLogging",
-          "s3:GetBucketObjectLockConfiguration",
-          "s3:GetBucketPolicy",
-          "s3:GetBucketRequestPayment",
-          "s3:GetBucketTagging" ,
-          "s3:GetBucketVersioning",
-          "s3:GetEncryptionConfiguration",
-          "s3:GetLifecycleConfiguration",
-          "s3:GetReplicationConfiguration",
-          "s3:GetObject",
-          "s3:GetBucketPublicAccessBlock",
-          "s3:ListBucket",
-          "s3:PutObject",
-          "s3:GetBucketAcl",
-          "s3:GetBucketWebsite",
-          "s3:GetAccelerateConfiguration",
-          # AWS Gateway
-          "apigateway:GET",
-          "apigateway:POST",
-          "apigateway:PUT",
-          "apigateway:DELETE",
+          "iam:PassRole",
+          
           # Lambda functions
           "lambda:GetFunction",
           "lambda:GetFunctionCodeSigningConfig",
@@ -69,26 +76,53 @@ resource "aws_iam_policy" "github_actions" {
           "lambda:ListVersionsByFunction",
           "lambda:UpdateFunctionCode",
           "lambda:UpdateFunctionConfiguration",
-          # DynamoDB - Terraform state locks + App Tables
-          "dynamodb:CreateTable", 
-          "dynamodb:DeleteTable",
-          "dynamodb:DescribeTable",
-          "dynamodb:DescribeTimeToLive",
-          "dynamodb:ListTables",
-          "dynamodb:ListTagsOfResource",
-          "dynamodb:PutItem",
-          "dynamodb:GetItem",
-          "dynamodb:UpdateItem",
-          "dynamodb:DeleteItem",
-          "dynamodb:Query",
-          "dynamodb:Scan",
-          "dynamodb:BatchGetItem",
-          "dynamodb:BatchWriteItem",
-          "dynamodb:UpdateTable",
-          "dynamodb:DescribeTableReplicaAutoScaling",
-          "dynamodb:DescribeContinuousBackups"
+          
+          # S3 - Terraform state bucket + App buckets
+          "s3:DeleteObject",
+          "s3:GetAccelerateConfiguration",
+          "s3:GetBucketAcl",
+          "s3:GetBucketCORS",
+          "s3:GetBucketLocation",
+          "s3:GetBucketLogging",
+          "s3:GetBucketObjectLockConfiguration",
+          "s3:GetBucketPolicy",
+          "s3:GetBucketPublicAccessBlock",
+          "s3:GetBucketRequestPayment",
+          "s3:GetBucketTagging",
+          "s3:GetBucketVersioning",
+          "s3:GetBucketWebsite",
+          "s3:GetEncryptionConfiguration",
+          "s3:GetLifecycleConfiguration",
+          "s3:GetObject",
+          "s3:GetReplicationConfiguration",
+          "s3:ListBucket",
+          "s3:PutObject"
         ]
         Resource = [
+          # Api Gateway
+          aws_apigatewayv2_api.lambda_api.arn,
+          "${aws_apigatewayv2_api.lambda_api.arn}/*",
+          "${aws_apigatewayv2_api.lambda_api.execution_arn}/*",
+          # CloudFront
+          aws_cloudfront_cache_policy.website.arn,
+          aws_cloudfront_distribution.website.arn,
+          aws_cloudfront_origin_access_control.website.arn,
+          # DynamoDB table
+          aws_dynamodb_table.app_table.arn,
+          "${aws_dynamodb_table.app_table.arn}/index/*",
+          # Frontend
+          aws_iam_policy.frontend_deployment.arn,
+          aws_iam_user.frontend_ci.arn,
+          # IAM resources
+          aws_iam_role.lambda_role.arn,
+          aws_iam_user.github_actions.arn,
+          "arn:aws:iam::${var.aws_account_id}:policy/github-actions-policy",
+          # Lambda functions + role
+          aws_lambda_function.search_colors.arn,
+          aws_lambda_function.submit_color.arn,
+          # Lambda functions bucket
+          aws_s3_bucket.functions_bucket.arn,
+          "${aws_s3_bucket.functions_bucket.arn}/*",
           # Terraform state bucket
           "arn:aws:s3:::awsplayground-terraform-state",
           "arn:aws:s3:::awsplayground-terraform-state/*",
@@ -96,24 +130,7 @@ resource "aws_iam_policy" "github_actions" {
           "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/awsplayground-terraform-locks",
           # Website bucket
           aws_s3_bucket.website.arn,
-          "${aws_s3_bucket.website.arn}/*",
-          # Lambda functions bucket
-          aws_s3_bucket.functions_bucket.arn,
-          "${aws_s3_bucket.functions_bucket.arn}/*",
-          # Api Gateway
-          aws_apigatewayv2_api.lambda_api.arn,
-          "${aws_apigatewayv2_api.lambda_api.arn}/*",
-          "${aws_apigatewayv2_api.lambda_api.execution_arn}/*",
-          # Lambda functions + role
-          aws_lambda_function.submit_color.arn,
-          aws_lambda_function.search_colors.arn,
-          aws_iam_role.lambda_role.arn,
-          # DynamoDB table
-          aws_dynamodb_table.app_table.arn,
-          "${aws_dynamodb_table.app_table.arn}/index/*",
-          # IAM resources
-          aws_iam_user.github_actions.arn,
-          "arn:aws:iam::${var.aws_account_id}:policy/github-actions-policy"
+          "${aws_s3_bucket.website.arn}/*"
         ]
       }
     ]
