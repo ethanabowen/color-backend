@@ -19,8 +19,8 @@ output "dynamodb_table_arn" {
 }
 
 output "api_url" {
+  value       = "${aws_apigatewayv2_stage.lambda_api.invoke_url}/colors"
   description = "URL of the API Gateway endpoint"
-  value       = "${aws_apigatewayv2_api.lambda_api.api_endpoint}/colors"
 }
 
 output "api_gateway_arn" {
@@ -50,7 +50,7 @@ output "search_colors_function_arn" {
 
 output "website_url" {
   description = "URL of the website"
-  value       = "http://${aws_s3_bucket.website.bucket}.s3-website-${data.aws_region.current.name}.amazonaws.com"
+  value       = "https://${aws_cloudfront_distribution.website.domain_name}"
 }
 
 output "website_bucket" {
@@ -59,6 +59,18 @@ output "website_bucket" {
 }
 
 output "website_bucket_name" {
-  description = "The name of the S3 bucket for the website"
   value       = aws_s3_bucket.website.id
+  description = "Name of the S3 bucket hosting the frontend website"
+}
+
+# Frontend deployment outputs
+output "frontend_ci_access_key_id" {
+  value       = aws_iam_access_key.frontend_ci.id
+  description = "Access Key ID for frontend CI/CD"
+}
+
+output "frontend_ci_secret_access_key" {
+  value       = aws_iam_access_key.frontend_ci.secret
+  description = "Secret Access Key for frontend CI/CD"
+  sensitive   = true
 } 

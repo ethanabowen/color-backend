@@ -11,9 +11,13 @@ locals {
     var.tags,
     {
       Environment = var.environment
+      Project     = var.project_name
       ManagedBy   = "terraform"
     }
   )
+  # Access keys will expire after 90 days
+  access_key_expiration = timeadd(timestamp(), "2160h") # 90 days
+  s3_origin_id = "${local.name_prefix}-website-origin"
 }
 
 # S3 bucket for application data
@@ -81,4 +85,4 @@ resource "aws_dynamodb_table" "app_table" {
   server_side_encryption {
     enabled = true
   }
-} 
+}
