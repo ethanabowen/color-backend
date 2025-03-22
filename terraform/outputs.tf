@@ -53,6 +53,11 @@ output "website_url" {
   value       = "https://${aws_cloudfront_distribution.website.domain_name}"
 }
 
+output "cloudfront_distribution_id" {
+  description = "ID of the CloudFront distribution"
+  value       = aws_cloudfront_distribution.website.id
+}
+
 output "website_bucket" {
   description = "Name of the S3 bucket hosting the website"
   value       = aws_s3_bucket.website.bucket
