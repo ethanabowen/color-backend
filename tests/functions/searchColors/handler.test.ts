@@ -1,7 +1,7 @@
 import { jest, describe, it, expect, beforeEach } from '@jest/globals';
-import { handler } from '../../src/functions/searchColors';
+import { handler } from '../../../src/functions/searchColors/handler';
 import { APIGatewayProxyEvent } from 'aws-lambda';
-import { searchColors } from '../../src/shared/dynamodb';
+import { searchColors } from '../../../src/shared/dynamodb';
 
 // Mock the DynamoDB utility
 jest.mock('../../src/shared/dynamodb', () => ({

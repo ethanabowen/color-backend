@@ -1,6 +1,7 @@
-import { handler } from '../../src/functions/submitColor';
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+import { handler } from '../../../src/functions/submitColor/handler';
 import { APIGatewayProxyEvent } from 'aws-lambda';
-import { saveColorSubmission } from '../../src/shared/dynamodb';
+import { saveColorSubmission } from '../../../src/shared/dynamodb';
 
 // Mock the DynamoDB utility
 jest.mock('../../src/shared/dynamodb', () => ({

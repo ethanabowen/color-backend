@@ -3,7 +3,7 @@ resource "aws_lambda_function" "submit_color" {
   filename         = data.archive_file.submit_color_zip.output_path
   function_name    = "${var.project_name}-${var.environment}-submit-color"
   role            = aws_iam_role.lambda_role.arn
-  handler         = "functions/submitColor/handler.submitColor"
+  handler         = "functions/submitColor/handler.handler"
   runtime         = "nodejs20.x"
   source_code_hash = data.archive_file.submit_color_zip.output_base64sha256
   timeout         = 30
@@ -26,7 +26,7 @@ resource "aws_lambda_function" "search_colors" {
   filename         = data.archive_file.search_colors_zip.output_path
   function_name    = "${var.project_name}-${var.environment}-search-colors"
   role            = aws_iam_role.lambda_role.arn
-  handler         = "functions/searchColors/handler.searchColors"
+  handler         = "functions/searchColors/handler.handler"
   runtime         = "nodejs20.x"
   source_code_hash = data.archive_file.search_colors_zip.output_base64sha256
   timeout         = 30
