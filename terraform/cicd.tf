@@ -27,6 +27,7 @@ resource "aws_iam_policy" "github_actions" {
           "cloudfront:GetCachePolicy",
           "cloudfront:GetDistribution",
           "cloudfront:GetOriginAccessControl",
+          "cloudfront:GetResponseHeadersPolicy",
           "cloudfront:ListTagsForResource",
           
           # DynamoDB - Terraform state locks + App Tables
@@ -107,6 +108,7 @@ resource "aws_iam_policy" "github_actions" {
           aws_cloudfront_cache_policy.website.arn,
           aws_cloudfront_distribution.website.arn,
           aws_cloudfront_origin_access_control.website.arn,
+          aws_cloudfront_response_headers_policy.website.arn,
           # DynamoDB table
           aws_dynamodb_table.app_table.arn,
           "${aws_dynamodb_table.app_table.arn}/index/*",
