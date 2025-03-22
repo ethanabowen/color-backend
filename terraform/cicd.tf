@@ -75,6 +75,7 @@ resource "aws_iam_policy" "github_actions" {
           "lambda:GetPolicy",
           "lambda:ListFunctions",
           "lambda:ListVersionsByFunction",
+          "lambda:PublishVersion",
           "lambda:UpdateFunctionCode",
           "lambda:UpdateFunctionConfiguration",
           
