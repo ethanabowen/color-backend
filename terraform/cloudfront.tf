@@ -27,7 +27,8 @@ resource "aws_cloudfront_distribution" "website" {
     viewer_protocol_policy = "redirect-to-https"
     compress              = true  # Enable automatic compression
 
-    cache_policy_id = aws_cloudfront_cache_policy.website.id
+    cache_policy_id            = aws_cloudfront_cache_policy.website.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.website.id
   }
 
   # Handle SPA routing - return index.html for all 404s
@@ -63,12 +64,40 @@ resource "aws_cloudfront_cache_policy" "website" {
       cookie_behavior = "none"
     }
     headers_config {
-      header_behavior = "none"
+      header_behavior = "whitelist"
+      headers {
+        items = ["Origin", "Access-Control-Request-Headers", "Access-Control-Request-Method", "Content-Type"]
+      }
     }
     query_strings_config {
       query_string_behavior = "none"
     }
     enable_accept_encoding_gzip   = true
     enable_accept_encoding_brotli = true
+  }
+}
+
+resource "aws_cloudfront_response_headers_policy" "website" {
+  name    = "${local.name_prefix}-website"
+  comment = "Response headers policy for website"
+
+  cors_config {
+    access_control_allow_credentials = false
+    access_control_allow_origins {
+      items = ["*"]
+    }
+    access_control_allow_methods {
+      items = ["GET", "HEAD"]
+    }
+    access_control_allow_headers {
+      items = ["*"]
+    }
+    origin_override = true
+  }
+
+  security_headers_config {
+    content_type_options {
+      override = true
+    }
   }
 } 
