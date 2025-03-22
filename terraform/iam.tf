@@ -8,6 +8,7 @@ resource "aws_iam_policy" "frontend_deployment" {
       {
         Effect = "Allow"
         Action = [
+          "cloudfront:CreateInvalidation",
           "s3:PutObject",
           "s3:GetObject",
           "s3:ListBucket",
