@@ -4,7 +4,7 @@ import { APIGatewayProxyEvent } from 'aws-lambda';
 import { searchColors } from '../../../src/shared/dynamodb';
 
 // Mock the DynamoDB utility
-jest.mock('../../src/shared/dynamodb', () => ({
+jest.mock('../../../src/shared/dynamodb', () => ({
   searchColors: jest.fn(),
 }));
 

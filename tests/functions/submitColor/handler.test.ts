@@ -4,7 +4,7 @@ import { APIGatewayProxyEvent } from 'aws-lambda';
 import { saveColorSubmission } from '../../../src/shared/dynamodb';
 
 // Mock the DynamoDB utility
-jest.mock('../../src/shared/dynamodb', () => ({
+jest.mock('../../../src/shared/dynamodb', () => ({
   saveColorSubmission: jest.fn(),
 }));
 
@@ -28,7 +28,7 @@ describe('submitColor Lambda', () => {
       ...mockSubmission,
       createdAt: new Date().toISOString(),
     };
-    (saveColorSubmission as jest.Mock).mockResolvedValue(mockSavedRecord);
+    (saveColorSubmission as jest.Mock).mockResolvedValue(mockSavedRecord as never);
 
     // Act
     const response = await handler(mockEvent as APIGatewayProxyEvent);
@@ -87,7 +87,7 @@ describe('submitColor Lambda', () => {
     const mockEvent: Partial<APIGatewayProxyEvent> = {
       body: JSON.stringify(mockSubmission),
     };
-    (saveColorSubmission as jest.Mock).mockRejectedValue(new Error('DynamoDB error'));
+    (saveColorSubmission as jest.Mock).mockRejectedValue(new Error('DynamoDB error') as never);
 
     // Act
     const response = await handler(mockEvent as APIGatewayProxyEvent);
