@@ -38,9 +38,5 @@ resource "aws_iam_user_policy_attachment" "frontend_deployment" {
 resource "aws_iam_access_key" "frontend_ci" {
   user = aws_iam_user.frontend_ci.name
 
-  lifecycle {
-    create_before_destroy = true
-  }
-
   depends_on = [aws_iam_user.frontend_ci]
 } 
