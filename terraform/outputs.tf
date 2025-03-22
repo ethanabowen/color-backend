@@ -19,7 +19,7 @@ output "dynamodb_table_arn" {
 }
 
 output "api_url" {
-  value       = "${aws_apigatewayv2_stage.lambda_api.invoke_url}/colors"
+  value       = "${aws_apigatewayv2_stage.lambda_api.invoke_url}"
   description = "URL of the API Gateway endpoint"
 }
 

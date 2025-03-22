@@ -8,7 +8,6 @@ resource "aws_iam_policy" "frontend_deployment" {
       {
         Effect = "Allow"
         Action = [
-          "cloudfront:CreateInvalidation",
           "s3:PutObject",
           "s3:GetObject",
           "s3:ListBucket",
@@ -17,6 +16,15 @@ resource "aws_iam_policy" "frontend_deployment" {
         Resource = [
           aws_s3_bucket.website.arn,
           "${aws_s3_bucket.website.arn}/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "cloudfront:CreateInvalidation"
+        ]
+        Resource = [
+          aws_cloudfront_distribution.website.arn
         ]
       }
     ]
