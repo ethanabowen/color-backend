@@ -13,6 +13,8 @@ describe('colorService Lambda', () => {
   // Reset mocks before each test
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset environment variables
+    process.env.WEBSITE_URL = 'https://example.com';
   });
 
   describe('POST /colors', () => {
@@ -211,6 +213,57 @@ describe('colorService Lambda', () => {
       });
       expect(searchColors).toHaveBeenCalledWith(undefined);
       expect(saveColorSubmission).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('OPTIONS /colors', () => {
+    it('should return CORS headers for preflight requests', async () => {
+      // Arrange
+      const mockEvent: Partial<APIGatewayProxyEvent> = {
+        httpMethod: 'OPTIONS',
+      };
+
+      // Act
+      const response = await handler(mockEvent as APIGatewayProxyEvent);
+
+      // Assert
+      expect(response.statusCode).toBe(200);
+      expect(response.headers).toEqual({
+        'Access-Control-Allow-Origin': 'https://example.com',
+        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Max-Age': '300',
+      });
+      expect(JSON.parse(response.body)).toEqual({
+        message: 'OK',
+      });
+      expect(saveColorSubmission).not.toHaveBeenCalled();
+      expect(searchColors).not.toHaveBeenCalled();
+    });
+
+    it('should handle missing WEBSITE_URL environment variable', async () => {
+      // Arrange
+      delete process.env.WEBSITE_URL;
+      const mockEvent: Partial<APIGatewayProxyEvent> = {
+        httpMethod: 'OPTIONS',
+      };
+
+      // Act
+      const response = await handler(mockEvent as APIGatewayProxyEvent);
+
+      // Assert
+      expect(response.statusCode).toBe(200);
+      expect(response.headers).toEqual({
+        'Access-Control-Allow-Origin': '',
+        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Max-Age': '300',
+      });
+      expect(JSON.parse(response.body)).toEqual({
+        message: 'OK',
+      });
+      expect(saveColorSubmission).not.toHaveBeenCalled();
+      expect(searchColors).not.toHaveBeenCalled();
     });
   });
 

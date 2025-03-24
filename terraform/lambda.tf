@@ -12,7 +12,8 @@ resource "aws_lambda_function" "color_service" {
 
   environment {
     variables = {
-      TABLE_NAME = aws_dynamodb_table.app_table.name
+      TABLE_NAME  = aws_dynamodb_table.app_table.name
+      WEBSITE_URL = "https://${aws_cloudfront_distribution.website.domain_name}"
     }
   }
 
@@ -77,6 +78,6 @@ resource "aws_iam_role_policy" "lambda_policy" {
 # Lambda ZIP Archive
 data "archive_file" "color_service_zip" {
   type        = "zip"
-  source_dir  = "${path.module}/../dist/functions/colorService"
+  source_dir  = "${path.module}/../dist"
   output_path = "${path.module}/../dist/color-service.zip"
-} 
+}

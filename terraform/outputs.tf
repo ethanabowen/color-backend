@@ -28,24 +28,14 @@ output "api_gateway_arn" {
   value       = aws_apigatewayv2_api.lambda_api.arn
 }
 
-output "submit_color_function_name" {
-  description = "Name of the submit color Lambda function"
-  value       = aws_lambda_function.submit_color.function_name
+output "color_service_function_name" {
+  description = "Name of the color service Lambda function"
+  value       = aws_lambda_function.color_service.function_name
 }
 
-output "submit_color_function_arn" {
-  description = "ARN of the submit color Lambda function"
-  value       = aws_lambda_function.submit_color.arn
-}
-
-output "search_colors_function_name" {
-  description = "Name of the search colors Lambda function"
-  value       = aws_lambda_function.search_colors.function_name
-}
-
-output "search_colors_function_arn" {
-  description = "ARN of the search colors Lambda function"
-  value       = aws_lambda_function.search_colors.arn
+output "color_service_function_arn" {
+  description = "ARN of the color service Lambda function"
+  value       = aws_lambda_function.color_service.arn
 }
 
 output "website_url" {

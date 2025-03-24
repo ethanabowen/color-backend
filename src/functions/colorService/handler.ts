@@ -3,12 +3,33 @@ import { ColorSubmission, LambdaHandler, SuccessResponse, ErrorResponse } from '
 import { saveColorSubmission, searchColors } from '@shared/dynamodb';
 
 export const handler: LambdaHandler = async (event) => {
+  const websiteUrl = process.env.WEBSITE_URL || '';
+
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': websiteUrl,
+  };
+
+  // Handle CORS preflight requests
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Max-Age': '300',
+        ...corsHeaders
+      },
+      body: JSON.stringify({ message: 'OK' }),
+    };
+  }
+
   try {
     switch (event.httpMethod) {
       case 'POST':
         if (!event.body) {
           return {
             statusCode: 400,
+            headers: corsHeaders,
             body: JSON.stringify({ message: 'Missing request body' }),
           };
         }
@@ -18,6 +39,7 @@ export const handler: LambdaHandler = async (event) => {
         if (!submission.firstName || !submission.favoriteColor) {
           return {
             statusCode: 400,
+            headers: corsHeaders,
             body: JSON.stringify({ message: 'Missing required fields' }),
           };
         }
@@ -31,6 +53,7 @@ export const handler: LambdaHandler = async (event) => {
 
         return {
           statusCode: submitResponse.statusCode,
+          headers: corsHeaders,
           body: JSON.stringify(submitResponse),
         };
 
@@ -45,12 +68,14 @@ export const handler: LambdaHandler = async (event) => {
 
         return {
           statusCode: searchResponse.statusCode,
+          headers: corsHeaders,
           body: JSON.stringify(searchResponse),
         };
 
       default:
         return {
           statusCode: 405,
+          headers: corsHeaders,
           body: JSON.stringify({ message: 'Method not allowed' }),
         };
     }
@@ -64,6 +89,7 @@ export const handler: LambdaHandler = async (event) => {
 
     return {
       statusCode: errorResponse.statusCode,
+      headers: corsHeaders,
       body: JSON.stringify(errorResponse),
     };
   }

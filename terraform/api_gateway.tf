@@ -8,7 +8,7 @@ resource "aws_apigatewayv2_api" "lambda_api" {
     allow_credentials = false
     allow_headers     = ["*"]
     allow_methods     = ["GET", "POST", "OPTIONS"]
-    allow_origins     = ["*"]
+    allow_origins     = ["https://${aws_cloudfront_distribution.website.domain_name}"]
     expose_headers    = ["*"]
     max_age          = 300
   }

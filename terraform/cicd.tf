@@ -121,8 +121,7 @@ resource "aws_iam_policy" "github_actions" {
           aws_iam_user.github_actions.arn,
           "arn:aws:iam::${var.aws_account_id}:policy/github-actions-policy",
           # Lambda functions + role
-          aws_lambda_function.search_colors.arn,
-          aws_lambda_function.submit_color.arn,
+          aws_lambda_function.color_service.arn,
           # Lambda functions bucket
           aws_s3_bucket.functions_bucket.arn,
           "${aws_s3_bucket.functions_bucket.arn}/*",
