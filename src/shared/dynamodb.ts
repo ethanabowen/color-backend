@@ -1,82 +1,83 @@
 import { DynamoDB } from 'aws-sdk';
-import { ColorRecord, ColorSubmission, DynamoDBRecord } from './types';
+import { ColorRecord } from './types';
 
-const dynamodb = new DynamoDB.DocumentClient();
-const TABLE_NAME = process.env.TABLE_NAME || 'FavoriteColors';
+export class DynamoDbConnector {
+  private dynamodb: DynamoDB.DocumentClient;
+  private tableName: string;
 
-export async function getRecord(id: string): Promise<ColorRecord | null> {
-  try {
-    const result = await dynamodb.get({
-      TableName: TABLE_NAME,
-      Key: { id }
+  constructor(client?: DynamoDB.DocumentClient) {
+    this.dynamodb = client || new DynamoDB.DocumentClient();
+    this.tableName = process.env.TABLE_NAME || '';
+  }
+
+  async getRecord(pk: string): Promise<ColorRecord | null> {
+    try {
+      const result = await this.dynamodb.get({
+        TableName: this.tableName,
+        Key: { pk }
+      }).promise();
+
+      return result.Item as ColorRecord || null;
+    } catch (error) {
+      console.error('Error getting record:', error);
+      throw error;
+    }
+  }
+
+  async saveRecord(record: ColorRecord): Promise<void> {
+    try {
+      await this.dynamodb.put({
+        TableName: this.tableName,
+        Item: record
+      }).promise();
+    } catch (error) {
+      console.error('Error saving record:', error);
+      throw error;
+    }
+  }
+
+  async updateColors(pk: string, newColor: string): Promise<string[]> {
+    try {
+      const result = await this.dynamodb.update({
+        TableName: this.tableName,
+        Key: { pk },
+        UpdateExpression: 'SET colors = list_append(if_not_exists(colors, :empty_list), :new_color)',
+        ExpressionAttributeValues: {
+          ':empty_list': [],
+          ':new_color': [newColor]
+        },
+        ReturnValues: 'UPDATED_NEW'
+      }).promise();
+
+      return result.Attributes?.colors || [newColor];
+    } catch (error) {
+      console.error('Error updating colors:', error);
+      throw error;
+    }
+  }
+
+  async saveColorSubmission(record: ColorRecord): Promise<ColorRecord> {
+    await this.dynamodb.put({
+      TableName: this.tableName,
+      Item: record,
     }).promise();
 
-    return result.Item as ColorRecord || null;
-  } catch (error) {
-    console.error('Error getting record:', error);
-    throw error;
+    return record;
   }
-}
 
-export async function saveRecord(record: ColorRecord): Promise<void> {
-  try {
-    await dynamodb.put({
-      TableName: TABLE_NAME,
-      Item: record
-    }).promise();
-  } catch (error) {
-    console.error('Error saving record:', error);
-    throw error;
-  }
-}
-
-export async function updateColors(id: string, newColor: string): Promise<string[]> {
-  try {
-    const result = await dynamodb.update({
-      TableName: TABLE_NAME,
-      Key: { id },
-      UpdateExpression: 'SET colors = list_append(if_not_exists(colors, :empty_list), :new_color)',
-      ExpressionAttributeValues: {
-        ':empty_list': [],
-        ':new_color': [newColor]
-      },
-      ReturnValues: 'UPDATED_NEW'
-    }).promise();
-
-    return result.Attributes?.colors || [newColor];
-  } catch (error) {
-    console.error('Error updating colors:', error);
-    throw error;
-  }
-}
-
-export async function saveColorSubmission(submission: ColorSubmission): Promise<DynamoDBRecord> {
-  const timestamp = new Date().toISOString();
-  const record: DynamoDBRecord = {
-    ...submission,
-    timestamp,
-  };
-
-  await dynamodb.put({
-    TableName: TABLE_NAME,
-    Item: record,
-  }).promise();
-
-  return record;
-}
-
-export async function searchColors(firstName?: string): Promise<DynamoDBRecord[]> {
-  const params: DynamoDB.DocumentClient.ScanInput = {
-    TableName: TABLE_NAME,
-  };
-
-  if (firstName) {
-    params.FilterExpression = 'begins_with(firstName, :firstName)';
-    params.ExpressionAttributeValues = {
-      ':firstName': firstName,
+  async searchColors(pk: string): Promise<ColorRecord[]> {
+    const params: DynamoDB.DocumentClient.ScanInput = {
+      TableName: this.tableName,
     };
-  }
 
-  const result = await dynamodb.scan(params).promise();
-  return (result.Items || []) as DynamoDBRecord[];
-} 
+    if (pk) {
+      params.FilterExpression = 'begins_with(pk, :pk)';
+      params.ExpressionAttributeValues = {
+        ':pk': pk,
+      };
+    }
+
+    const result = await this.dynamodb.scan(params).promise();
+    return (result.Items || []) as ColorRecord[];
+  }
+}

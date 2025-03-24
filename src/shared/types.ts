@@ -1,9 +1,17 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { APIGatewayProxyEventV2, APIGatewayProxyResult } from 'aws-lambda';
 
-// DynamoDB record type
+// Core domain types
+export interface ColorSubmission {
+  firstName: string;    // Primary key
+  favoriteColor: string;
+}
+
+// Database types
 export interface ColorRecord {
-  id: string;           // User's first name (partition key)
-  colors: string[];     // Array of favorite colors
+  pk: string;          // firstName (partition key)
+  favoriteColor: string;
+  timestamp: string;
+  colors: string[];    // Array of favorite colors
 }
 
 // API Request/Response types
@@ -28,25 +36,8 @@ export interface SearchColorsResponse {
   record?: ColorRecord;
 }
 
-export interface ColorSubmission {
-  firstName: string;
-  favoriteColor: string;
-}
-
-export interface ColorSearchResult {
-  firstName: string;
-  favoriteColor: string;
-  timestamp: string;
-}
-
-export interface DynamoDBRecord {
-  firstName: string;
-  favoriteColor: string;
-  timestamp: string;
-}
-
 export type LambdaHandler = (
-  event: APIGatewayProxyEvent
+  event: APIGatewayProxyEventV2
 ) => Promise<APIGatewayProxyResult>;
 
 export interface ErrorResponse {

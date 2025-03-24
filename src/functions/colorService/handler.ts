@@ -1,31 +1,31 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { ColorSubmission, LambdaHandler, SuccessResponse, ErrorResponse } from '@shared/types';
-import { saveColorSubmission, searchColors } from '@shared/dynamodb';
+import { ColorSubmission, LambdaHandler, ErrorResponse } from '@shared/types';
+import { ColorService } from './service';
+
+const colorService = new ColorService();
 
 export const handler: LambdaHandler = async (event) => {
+  if (process.env.DEBUG === 'true') {
+    console.debug('Received event:', JSON.stringify(event, null, 2));
+  }
+
   const websiteUrl = process.env.WEBSITE_URL || '';
 
   const corsHeaders = {
     'Access-Control-Allow-Origin': websiteUrl,
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Access-Control-Allow-Headers': '*',
+    'Access-Control-Max-Age': '300'
   };
 
-  // Handle CORS preflight requests
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-        'Access-Control-Allow-Headers': '*',
-        'Access-Control-Max-Age': '300',
-        ...corsHeaders
-      },
-      body: JSON.stringify({ message: 'OK' }),
-    };
-  }
-
   try {
-    switch (event.httpMethod) {
-      case 'POST':
+    switch (event.requestContext.http.method) {
+      case 'OPTIONS': 
+        return {
+          statusCode: 200,
+          headers: corsHeaders,
+          body: JSON.stringify({ message: 'OK' }),
+        };
+      case 'POST': {
         if (!event.body) {
           return {
             statusCode: 400,
@@ -44,34 +44,32 @@ export const handler: LambdaHandler = async (event) => {
           };
         }
 
-        const record = await saveColorSubmission(submission);
-        
-        const submitResponse: SuccessResponse<typeof record> = {
-          data: record,
-          statusCode: 201,
-        };
+        const response = await colorService.submitColor(submission);
 
         return {
-          statusCode: submitResponse.statusCode,
+          statusCode: response.statusCode,
           headers: corsHeaders,
-          body: JSON.stringify(submitResponse),
+          body: JSON.stringify(response.data),
         };
-
-      case 'GET':
+      }
+      case 'GET': {
         const firstName = event.queryStringParameters?.firstName;
-        const results = await searchColors(firstName);
+        if (!firstName) {
+          return {
+            statusCode: 400,
+            headers: corsHeaders,
+            body: JSON.stringify({ message: 'Missing required firstName parameter' }),
+          };
+        }
         
-        const searchResponse: SuccessResponse<typeof results> = {
-          data: results,
-          statusCode: 200,
-        };
+        const response = await colorService.searchColors(firstName);
 
         return {
-          statusCode: searchResponse.statusCode,
+          statusCode: response.statusCode,
           headers: corsHeaders,
-          body: JSON.stringify(searchResponse),
+          body: JSON.stringify(response.data),
         };
-
+      } 
       default:
         return {
           statusCode: 405,
@@ -91,6 +89,6 @@ export const handler: LambdaHandler = async (event) => {
       statusCode: errorResponse.statusCode,
       headers: corsHeaders,
       body: JSON.stringify(errorResponse),
-    };
+    }
   }
 }; 

@@ -1,107 +1,123 @@
 import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 import { handler } from '../../../src/functions/colorService/handler';
-import { APIGatewayProxyEvent } from 'aws-lambda';
-import { saveColorSubmission, searchColors } from '../../../src/shared/dynamodb';
+import { APIGatewayProxyEventV2 } from 'aws-lambda';
+import { ColorService } from '../../../src/functions/colorService/service';
+import { ColorSubmission, ColorRecord, SuccessResponse } from '../../../src/shared/types';
 
-// Mock the DynamoDB utilities
-jest.mock('../../../src/shared/dynamodb', () => ({
-  saveColorSubmission: jest.fn(),
-  searchColors: jest.fn(),
-}));
+const createMockRequestContext = (method: string) => ({
+  accountId: '123456789012',
+  apiId: 'test-api-id',
+  domainName: 'test-api.execute-api.region.amazonaws.com',
+  domainPrefix: 'test-api',
+  http: {
+    method,
+    path: '/dev/colors',
+    protocol: 'HTTP/1.1',
+    sourceIp: '127.0.0.1',
+    userAgent: 'test-agent'
+  },
+  requestId: 'test-request-id',
+  routeKey: 'ANY /colors',
+  stage: 'dev',
+  time: '24/Mar/2025:16:49:24 +0000',
+  timeEpoch: 1742834964789
+});
 
 describe('colorService Lambda', () => {
-  // Reset mocks before each test
+  let submitColorSpy: any;
+  let searchColorsSpy: any;
+  
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset environment variables
     process.env.WEBSITE_URL = 'https://example.com';
+    submitColorSpy = jest.spyOn(ColorService.prototype, 'submitColor');
+    searchColorsSpy = jest.spyOn(ColorService.prototype, 'searchColors');
   });
 
   describe('POST /colors', () => {
     it('should successfully submit a color', async () => {
       // Arrange
-      const mockSubmission = {
+      const mockSubmission: ColorSubmission = {
         firstName: 'John',
         favoriteColor: 'blue',
       };
-      const mockEvent: Partial<APIGatewayProxyEvent> = {
-        httpMethod: 'POST',
+      const mockEvent: Partial<APIGatewayProxyEventV2> = {
+        requestContext: createMockRequestContext('POST'),
         body: JSON.stringify(mockSubmission),
       };
-      const mockSavedRecord = {
-        id: '123',
-        ...mockSubmission,
-        createdAt: new Date().toISOString(),
+      const mockResponse = {
+        data: {
+          pk: 'John',
+          favoriteColor: 'blue',
+          colors: ['blue'],
+          timestamp: '2024-01-01T00:00:00.000Z',
+        },
+        statusCode: 201,
       };
-      (saveColorSubmission as jest.Mock).mockResolvedValue(mockSavedRecord as never);
+
+      submitColorSpy.mockImplementation(() => Promise.resolve(mockResponse as never));
 
       // Act
-      const response = await handler(mockEvent as APIGatewayProxyEvent);
+      const response = await handler(mockEvent as APIGatewayProxyEventV2);
 
       // Assert
       expect(response.statusCode).toBe(201);
-      expect(JSON.parse(response.body)).toEqual({
-        data: mockSavedRecord,
-        statusCode: 201,
-      });
-      expect(saveColorSubmission).toHaveBeenCalledWith(mockSubmission);
-      expect(searchColors).not.toHaveBeenCalled();
+      expect(JSON.parse(response.body)).toEqual(mockResponse.data);
+      expect(submitColorSpy).toHaveBeenCalledWith(mockSubmission);
     });
 
     it('should return 400 when request body is missing', async () => {
       // Arrange
-      const mockEvent: Partial<APIGatewayProxyEvent> = {
-        httpMethod: 'POST',
+      const mockEvent: Partial<APIGatewayProxyEventV2> = {
+        requestContext: createMockRequestContext('POST'),
         body: undefined,
       };
 
       // Act
-      const response = await handler(mockEvent as APIGatewayProxyEvent);
+      const response = await handler(mockEvent as APIGatewayProxyEventV2);
 
       // Assert
       expect(response.statusCode).toBe(400);
       expect(JSON.parse(response.body)).toEqual({
         message: 'Missing request body',
       });
-      expect(saveColorSubmission).not.toHaveBeenCalled();
-      expect(searchColors).not.toHaveBeenCalled();
+      expect(submitColorSpy).not.toHaveBeenCalled();
     });
 
     it('should return 400 when required fields are missing', async () => {
       // Arrange
-      const mockEvent: Partial<APIGatewayProxyEvent> = {
-        httpMethod: 'POST',
+      const mockEvent: Partial<APIGatewayProxyEventV2> = {
+        requestContext: createMockRequestContext('POST'),
         body: JSON.stringify({
           firstName: 'John',
         }),
       };
 
       // Act
-      const response = await handler(mockEvent as APIGatewayProxyEvent);
+      const response = await handler(mockEvent as APIGatewayProxyEventV2);
 
       // Assert
       expect(response.statusCode).toBe(400);
       expect(JSON.parse(response.body)).toEqual({
         message: 'Missing required fields',
       });
-      expect(saveColorSubmission).not.toHaveBeenCalled();
-      expect(searchColors).not.toHaveBeenCalled();
+      expect(submitColorSpy).not.toHaveBeenCalled();
     });
 
-    it('should return 500 when DynamoDB operation fails', async () => {
+    it('should return 500 when service operation fails', async () => {
       // Arrange
-      const mockSubmission = {
+      const mockSubmission: ColorSubmission = {
         firstName: 'John',
         favoriteColor: 'blue',
       };
-      const mockEvent: Partial<APIGatewayProxyEvent> = {
-        httpMethod: 'POST',
+      const mockEvent: Partial<APIGatewayProxyEventV2> = {
+        requestContext: createMockRequestContext('POST'),
         body: JSON.stringify(mockSubmission),
       };
-      (saveColorSubmission as jest.Mock).mockRejectedValue(new Error('DynamoDB error') as never);
+      submitColorSpy.mockRejectedValue(new Error('Service error') as never);
 
       // Act
-      const response = await handler(mockEvent as APIGatewayProxyEvent);
+      const response = await handler(mockEvent as APIGatewayProxyEventV2);
 
       // Assert
       expect(response.statusCode).toBe(500);
@@ -109,8 +125,7 @@ describe('colorService Lambda', () => {
         message: 'Internal server error',
         statusCode: 500,
       });
-      expect(saveColorSubmission).toHaveBeenCalledWith(mockSubmission);
-      expect(searchColors).not.toHaveBeenCalled();
+      expect(submitColorSpy).toHaveBeenCalledWith(mockSubmission);
     });
   });
 
@@ -118,70 +133,65 @@ describe('colorService Lambda', () => {
     it('should successfully search colors by firstName', async () => {
       // Arrange
       const mockFirstName = 'John';
-      const mockEvent: Partial<APIGatewayProxyEvent> = {
-        httpMethod: 'GET',
+      const mockEvent: Partial<APIGatewayProxyEventV2> = {
+        requestContext: createMockRequestContext('GET'),
         queryStringParameters: {
           firstName: mockFirstName,
         },
       };
-      const mockResults = [
-        {
-          id: '123',
-          firstName: mockFirstName,
-          favoriteColor: 'blue',
-          createdAt: new Date().toISOString(),
-        },
-      ];
-      (searchColors as jest.Mock).mockResolvedValue(mockResults as never);
+      const mockResponse = {
+        data: [
+          {
+            pk: 'John',
+            favoriteColor: 'blue',
+            colors: ['blue'],
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+        statusCode: 200,
+      };
+      searchColorsSpy.mockImplementation(() => Promise.resolve(mockResponse as never));
 
       // Act
-      const response = await handler(mockEvent as APIGatewayProxyEvent);
+      const response = await handler(mockEvent as APIGatewayProxyEventV2);
 
       // Assert
       expect(response.statusCode).toBe(200);
-      expect(JSON.parse(response.body)).toEqual({
-        data: mockResults,
-        statusCode: 200,
-      });
-      expect(searchColors).toHaveBeenCalledWith(mockFirstName);
-      expect(saveColorSubmission).not.toHaveBeenCalled();
+      expect(JSON.parse(response.body)).toEqual(mockResponse.data);
+      expect(searchColorsSpy).toHaveBeenCalledWith(mockFirstName);
     });
 
-    it('should return empty results when no firstName is provided', async () => {
+    it('should return 400 when firstName is missing', async () => {
       // Arrange
-      const mockEvent: Partial<APIGatewayProxyEvent> = {
-        httpMethod: 'GET',
+      const mockEvent: Partial<APIGatewayProxyEventV2> = {
+        requestContext: createMockRequestContext('GET'),
         queryStringParameters: {},
       };
-      const mockResults: any[] = [];
-      (searchColors as jest.Mock).mockResolvedValue(mockResults as never);
 
       // Act
-      const response = await handler(mockEvent as APIGatewayProxyEvent);
+      const response = await handler(mockEvent as APIGatewayProxyEventV2);
 
       // Assert
-      expect(response.statusCode).toBe(200);
+      expect(response.statusCode).toBe(400);
       expect(JSON.parse(response.body)).toEqual({
-        data: mockResults,
-        statusCode: 200,
+        message: 'Missing required firstName parameter',
       });
-      expect(searchColors).toHaveBeenCalledWith(undefined);
-      expect(saveColorSubmission).not.toHaveBeenCalled();
+      expect(searchColorsSpy).not.toHaveBeenCalled();
     });
 
-    it('should return 500 when DynamoDB operation fails', async () => {
+    it('should return 500 when service operation fails', async () => {
       // Arrange
       const mockFirstName = 'John';
-      const mockEvent: Partial<APIGatewayProxyEvent> = {
-        httpMethod: 'GET',
+      const mockEvent: Partial<APIGatewayProxyEventV2> = {
+        requestContext: createMockRequestContext('GET'),
         queryStringParameters: {
           firstName: mockFirstName,
         },
       };
-      (searchColors as jest.Mock).mockRejectedValue(new Error('DynamoDB error') as never);
+      searchColorsSpy.mockRejectedValue(new Error('Service error') as never);
 
       // Act
-      const response = await handler(mockEvent as APIGatewayProxyEvent);
+      const response = await handler(mockEvent as APIGatewayProxyEventV2);
 
       // Assert
       expect(response.statusCode).toBe(500);
@@ -189,42 +199,19 @@ describe('colorService Lambda', () => {
         message: 'Internal server error',
         statusCode: 500,
       });
-      expect(searchColors).toHaveBeenCalledWith(mockFirstName);
-      expect(saveColorSubmission).not.toHaveBeenCalled();
-    });
-
-    it('should handle missing queryStringParameters', async () => {
-      // Arrange
-      const mockEvent: Partial<APIGatewayProxyEvent> = {
-        httpMethod: 'GET',
-        queryStringParameters: undefined,
-      };
-      const mockResults: any[] = [];
-      (searchColors as jest.Mock).mockResolvedValue(mockResults as never);
-
-      // Act
-      const response = await handler(mockEvent as APIGatewayProxyEvent);
-
-      // Assert
-      expect(response.statusCode).toBe(200);
-      expect(JSON.parse(response.body)).toEqual({
-        data: mockResults,
-        statusCode: 200,
-      });
-      expect(searchColors).toHaveBeenCalledWith(undefined);
-      expect(saveColorSubmission).not.toHaveBeenCalled();
+      expect(searchColorsSpy).toHaveBeenCalledWith(mockFirstName);
     });
   });
 
   describe('OPTIONS /colors', () => {
     it('should return CORS headers for preflight requests', async () => {
       // Arrange
-      const mockEvent: Partial<APIGatewayProxyEvent> = {
-        httpMethod: 'OPTIONS',
+      const mockEvent: Partial<APIGatewayProxyEventV2> = {
+        requestContext: createMockRequestContext('OPTIONS'),
       };
 
       // Act
-      const response = await handler(mockEvent as APIGatewayProxyEvent);
+      const response = await handler(mockEvent as APIGatewayProxyEventV2);
 
       // Assert
       expect(response.statusCode).toBe(200);
@@ -237,19 +224,19 @@ describe('colorService Lambda', () => {
       expect(JSON.parse(response.body)).toEqual({
         message: 'OK',
       });
-      expect(saveColorSubmission).not.toHaveBeenCalled();
-      expect(searchColors).not.toHaveBeenCalled();
+      expect(submitColorSpy).not.toHaveBeenCalled();
+      expect(searchColorsSpy).not.toHaveBeenCalled();
     });
 
     it('should handle missing WEBSITE_URL environment variable', async () => {
       // Arrange
       delete process.env.WEBSITE_URL;
-      const mockEvent: Partial<APIGatewayProxyEvent> = {
-        httpMethod: 'OPTIONS',
+      const mockEvent: Partial<APIGatewayProxyEventV2> = {
+        requestContext: createMockRequestContext('OPTIONS'),
       };
 
       // Act
-      const response = await handler(mockEvent as APIGatewayProxyEvent);
+      const response = await handler(mockEvent as APIGatewayProxyEventV2);
 
       // Assert
       expect(response.statusCode).toBe(200);
@@ -262,28 +249,28 @@ describe('colorService Lambda', () => {
       expect(JSON.parse(response.body)).toEqual({
         message: 'OK',
       });
-      expect(saveColorSubmission).not.toHaveBeenCalled();
-      expect(searchColors).not.toHaveBeenCalled();
+      expect(submitColorSpy).not.toHaveBeenCalled();
+      expect(searchColorsSpy).not.toHaveBeenCalled();
     });
   });
 
   describe('Unsupported Methods', () => {
     it('should return 405 for unsupported HTTP methods', async () => {
       // Arrange
-      const mockEvent: Partial<APIGatewayProxyEvent> = {
-        httpMethod: 'PUT',
+      const mockEvent: Partial<APIGatewayProxyEventV2> = {
+        requestContext: createMockRequestContext('PUT'),
       };
 
       // Act
-      const response = await handler(mockEvent as APIGatewayProxyEvent);
+      const response = await handler(mockEvent as APIGatewayProxyEventV2);
 
       // Assert
       expect(response.statusCode).toBe(405);
       expect(JSON.parse(response.body)).toEqual({
         message: 'Method not allowed',
       });
-      expect(saveColorSubmission).not.toHaveBeenCalled();
-      expect(searchColors).not.toHaveBeenCalled();
+      expect(submitColorSpy).not.toHaveBeenCalled();
+      expect(searchColorsSpy).not.toHaveBeenCalled();
     });
   });
 }); 

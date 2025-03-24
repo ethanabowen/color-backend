@@ -87,7 +87,7 @@ resource "aws_cloudfront_response_headers_policy" "website" {
       items = ["*"]
     }
     access_control_allow_methods {
-      items = ["GET", "HEAD"]
+      items = ["GET", "HEAD", "OPTIONS"]
     }
     access_control_allow_headers {
       items = ["*"]

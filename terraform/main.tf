@@ -66,10 +66,10 @@ resource "aws_dynamodb_table" "app_table" {
   billing_mode   = var.dynamodb_billing_mode
   read_capacity  = var.dynamodb_billing_mode == "PROVISIONED" ? var.dynamodb_read_capacity : null
   write_capacity = var.dynamodb_billing_mode == "PROVISIONED" ? var.dynamodb_write_capacity : null
-  hash_key       = "id"
+  hash_key       = "pk"
 
   attribute {
-    name = "id"
+    name = "pk"
     type = "S"
   }
 

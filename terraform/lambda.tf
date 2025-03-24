@@ -80,4 +80,5 @@ data "archive_file" "color_service_zip" {
   type        = "zip"
   source_dir  = "${path.module}/../dist"
   output_path = "${path.module}/../dist/color-service.zip"
+  excludes    = ["color-service.zip"]
 }
