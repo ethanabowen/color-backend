@@ -46,6 +46,8 @@ resource "aws_iam_policy" "github_actions" {
           "dynamodb:PutItem",
           "dynamodb:Query",
           "dynamodb:Scan",
+				  "dynamodb:TagResource",
+				  "dynamodb:UpdateContinuousBackups",
           "dynamodb:UpdateItem",
           "dynamodb:UpdateTable",
           
@@ -122,6 +124,7 @@ resource "aws_iam_policy" "github_actions" {
           "arn:aws:iam::${var.aws_account_id}:policy/github-actions-policy",
           # Lambda functions + role
           aws_lambda_function.color_service.arn,
+          "${aws_lambda_function.color_service.arn}:*",
           # Lambda functions bucket
           aws_s3_bucket.functions_bucket.arn,
           "${aws_s3_bucket.functions_bucket.arn}/*",
