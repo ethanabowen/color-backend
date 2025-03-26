@@ -70,12 +70,10 @@ export class DynamoDbConnector {
       TableName: this.tableName,
     };
 
-    if (pk) {
-      params.FilterExpression = 'begins_with(pk, :pk)';
-      params.ExpressionAttributeValues = {
-        ':pk': pk,
-      };
-    }
+    params.FilterExpression = 'begins_with(pk, :pk)';
+    params.ExpressionAttributeValues = {
+      ':pk': pk,
+    };
 
     const result = await this.dynamodb.scan(params).promise();
     return (result.Items || []) as ColorRecord[];

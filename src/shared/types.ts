@@ -14,28 +14,6 @@ export interface ColorRecord {
   colors: string[];    // Array of favorite colors
 }
 
-// API Request/Response types
-export interface SubmitColorRequest {
-  firstName: string;
-  favoriteColor: string;
-}
-
-export interface SubmitColorResponse {
-  success: boolean;
-  message: string;
-  colors?: string[];
-}
-
-export interface SearchColorsRequest {
-  firstName: string;
-}
-
-export interface SearchColorsResponse {
-  success: boolean;
-  message: string;
-  record?: ColorRecord;
-}
-
 export type LambdaHandler = (
   event: APIGatewayProxyEventV2
 ) => Promise<APIGatewayProxyResult>;
