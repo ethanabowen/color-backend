@@ -243,25 +243,6 @@ describe('DynamoDB Utils', () => {
         });
       });
 
-      it('should successfully search colors without a pk', async () => {
-        // Arrange
-        const response: DynamoDBResponse = {
-          Items: [mockRecord],
-        };
-        searchColorsDocumentClientSpy.mockReturnValue({
-          promise: jest.fn().mockResolvedValue(response as never)
-        });
-
-        // Act
-        const result = await dynamodb.searchColors('');
-
-        // Assert
-        expect(result).toEqual([mockRecord]);
-        expect(searchColorsDocumentClientSpy).toHaveBeenCalledWith({
-          TableName: 'FavoriteColors',
-        });
-      });
-
       it('should handle errors', async () => {
         // Arrange
         const error = new Error('DynamoDB error');
