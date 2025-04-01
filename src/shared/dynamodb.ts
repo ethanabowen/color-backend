@@ -1,5 +1,6 @@
 import { DynamoDB } from 'aws-sdk';
 import { ColorRecord } from './types';
+import DEBUG from './debug';
 
 export class DynamoDbConnector {
   private dynamodb: DynamoDB.DocumentClient;
@@ -17,8 +18,10 @@ export class DynamoDbConnector {
         Key: { pk }
       }).promise();
 
+      DEBUG('Get record result: %O', result);
       return result.Item as ColorRecord || null;
     } catch (error) {
+      DEBUG('Error getting record: %O', error);
       console.error('Error getting record:', error);
       throw error;
     }
@@ -30,7 +33,10 @@ export class DynamoDbConnector {
         TableName: this.tableName,
         Item: record
       }).promise();
+
+      DEBUG('Record saved successfully');
     } catch (error) {
+      DEBUG('Error saving record: %O', error);
       console.error('Error saving record:', error);
       throw error;
     }
@@ -49,8 +55,11 @@ export class DynamoDbConnector {
         ReturnValues: 'UPDATED_NEW'
       }).promise();
 
+      DEBUG('Update colors result: %O', result);
+
       return result.Attributes?.colors || [newColor];
     } catch (error) {
+      DEBUG('Error updating colors: %O', error);
       console.error('Error updating colors:', error);
       throw error;
     }
@@ -61,6 +70,8 @@ export class DynamoDbConnector {
       TableName: this.tableName,
       Item: record,
     }).promise();
+    
+    DEBUG('Color submission saved successfully');
 
     return record;
   }
@@ -76,6 +87,8 @@ export class DynamoDbConnector {
     };
 
     const result = await this.dynamodb.scan(params).promise();
+    DEBUG('Search results: %d items found', result.Items?.length || 0);
+
     return (result.Items || []) as ColorRecord[];
   }
 }

@@ -24,10 +24,11 @@ The backend infrastructure is managed using Terraform and includes:
 
 ### Environment Variables
 
-Required environment variables:
-- `AWS_REGION`: AWS region for deployment (default: us-east-1)
-- `ENVIRONMENT`: Environment name (dev, test, prod)
-- `ROUTE53_ZONE_ID`: Route53 hosted zone ID
+| Variable | Description |
+|----------|-------------|
+| `TABLE_NAME` | DynamoDB table name |
+| `WEBSITE_URL` | Frontend URL for CORS |
+| `DEBUG` | Set to enable debug logging (e.g., `DEBUG=*app*`) |
 
 ## Development Setup
 
@@ -168,3 +169,23 @@ npm run test:integration
 ## License
 
 MIT 
+
+## Debugging
+
+The application uses the [debug](https://www.npmjs.com/package/debug) package for conditional debugging:
+
+- Set `DEBUG=*app*` environment variable to enable debug logs
+- Debug output includes timestamps and formatted data
+- Works in both local development and Lambda environments
+
+Debug logs are added to key operations:
+- API request handling
+- DynamoDB operations
+- Error handling
+
+Example local development with debug enabled:
+```bash
+DEBUG=* npm run dev
+```
+
+In AWS Lambda, you can set the DEBUG environment variable in the Lambda configuration. 
