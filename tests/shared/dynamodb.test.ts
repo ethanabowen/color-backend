@@ -1,7 +1,7 @@
 import { jest, describe, it, expect, beforeEach, afterAll } from '@jest/globals';
 import { DynamoDbConnector } from '../../src/shared/dynamodb';
 import { ColorRecord } from '../../src/shared/types';
-import DynamoDB from 'aws-sdk/clients/dynamodb';
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 
 type DynamoDBResponse = {
   Item?: ColorRecord | null;
@@ -9,16 +9,11 @@ type DynamoDBResponse = {
   Attributes?: { colors: string[] };
 };
 
-
 describe('DynamoDB Utils', () => {
   let dynamodb: DynamoDbConnector;
+  let docClient: DynamoDBDocumentClient;
+  let sendSpy: any;
 
-  let documentClient: DynamoDB.DocumentClient;
-  let getRecordDocumentClientSpy: any;
-  let saveRecordDocumentClientSpy: any;
-  let updateColorsDocumentClientSpy: any;
-  let saveColorSubmissionDocumentClientSpy: any;
-  let searchColorsDocumentClientSpy: any;
   const mockRecord: ColorRecord = {
     pk: 'John',
     favoriteColor: 'blue',
@@ -29,14 +24,14 @@ describe('DynamoDB Utils', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env.TABLE_NAME = 'FavoriteColors';
-    documentClient = new DynamoDB.DocumentClient();
-    getRecordDocumentClientSpy = jest.spyOn(documentClient, 'get');
-    saveRecordDocumentClientSpy = jest.spyOn(documentClient, 'put');
-    updateColorsDocumentClientSpy = jest.spyOn(documentClient, 'update');
-    saveColorSubmissionDocumentClientSpy = jest.spyOn(documentClient, 'put');
-    searchColorsDocumentClientSpy = jest.spyOn(documentClient, 'scan');
+    process.env.DEBUG = '*';
 
-    dynamodb = new DynamoDbConnector(documentClient);
+    docClient = {
+      send: jest.fn(),
+    } as unknown as DynamoDBDocumentClient;
+
+    sendSpy = jest.spyOn(docClient, 'send');
+    dynamodb = new DynamoDbConnector(docClient);
   });
 
   describe('initialization', () => {
@@ -56,7 +51,7 @@ describe('DynamoDB Utils', () => {
       process.env.TABLE_NAME = 'TestTable';
       
       // Act
-      const db = new DynamoDbConnector(documentClient);
+      const db = new DynamoDbConnector(docClient);
 
       // Assert
       expect(db['tableName']).toBe('TestTable');
@@ -67,7 +62,7 @@ describe('DynamoDB Utils', () => {
       delete process.env.TABLE_NAME;
       
       // Act
-      const db = new DynamoDbConnector(documentClient);
+      const db = new DynamoDbConnector(docClient);
 
       // Assert
       expect(db['tableName']).toBe('');
@@ -78,27 +73,25 @@ describe('DynamoDB Utils', () => {
     it('should successfully get a record', async () => {
       // Arrange
       const response: DynamoDBResponse = { Item: mockRecord };
-      getRecordDocumentClientSpy.mockReturnValue({
-        promise: jest.fn().mockResolvedValue(response as never)
-      });
+      sendSpy.mockResolvedValue(response);
 
       // Act
       const result = await dynamodb.getRecord('John');
 
       // Assert
       expect(result).toEqual(mockRecord);
-      expect(getRecordDocumentClientSpy).toHaveBeenCalledWith({
-        TableName: 'FavoriteColors',
-        Key: { pk: 'John' },
-      });
+      expect(sendSpy).toHaveBeenCalledWith(expect.objectContaining({
+        input: {
+          TableName: 'FavoriteColors',
+          Key: { pk: 'John' },
+        }
+      }));
     });
 
     it('should return null when no record is found', async () => {
       // Arrange
       const response: DynamoDBResponse = { Item: null };
-      getRecordDocumentClientSpy.mockReturnValue({
-        promise: jest.fn().mockResolvedValue(response as never)
-      });
+      sendSpy.mockResolvedValue(response);
 
       // Act
       const result = await dynamodb.getRecord('John');
@@ -107,64 +100,59 @@ describe('DynamoDB Utils', () => {
       expect(result).toEqual(null);
     });
 
-      it('should handle errors', async () => {
-        // Arrange
-        const error = new Error('DynamoDB error');
-        getRecordDocumentClientSpy.mockReturnValue({
-          promise: jest.fn().mockRejectedValue(error as never)
-        });
+    it('should handle errors', async () => {
+      // Arrange
+      const error = new Error('DynamoDB error');
+      sendSpy.mockRejectedValue(error);
 
-        // Act & Assert
-        await expect(dynamodb.getRecord('John')).rejects.toThrow('DynamoDB error');
-      });
+      // Act & Assert
+      await expect(dynamodb.getRecord('John')).rejects.toThrow('DynamoDB error');
     });
+  });
 
-    describe('saveRecord', () => {
-      it('should successfully save a record', async () => {
-        // Arrange
-        const response: DynamoDBResponse = {};
-        saveRecordDocumentClientSpy.mockReturnValue({
-          promise: jest.fn().mockResolvedValue(response as never)
-        });
+  describe('saveRecord', () => {
+    it('should successfully save a record', async () => {
+      // Arrange
+      const response: DynamoDBResponse = {};
+      sendSpy.mockResolvedValue(response);
 
-        // Act
-        await dynamodb.saveRecord(mockRecord);
+      // Act
+      await dynamodb.saveRecord(mockRecord);
 
-        // Assert
-        expect(saveRecordDocumentClientSpy).toHaveBeenCalledWith({
+      // Assert
+      expect(sendSpy).toHaveBeenCalledWith(expect.objectContaining({
+        input: {
           TableName: 'FavoriteColors',
           Item: mockRecord,
-        });
-      });
-
-      it('should handle errors', async () => {
-        // Arrange
-        const error = new Error('DynamoDB error');
-        saveRecordDocumentClientSpy.mockReturnValue({
-          promise: jest.fn().mockRejectedValue(error as never)
-        });
-
-        // Act & Assert
-        await expect(dynamodb.saveRecord(mockRecord)).rejects.toThrow('DynamoDB error');
-      });
+        }
+      }));
     });
 
-    describe('updateColors', () => {
-      it('should successfully update colors for a record', async () => {
-        // Arrange
-        const response: DynamoDBResponse = {
-          Attributes: { colors: ['blue', 'red'] },
-        };
-        updateColorsDocumentClientSpy.mockReturnValue({
-          promise: jest.fn().mockResolvedValue(response as never)
-        });
+    it('should handle errors', async () => {
+      // Arrange
+      const error = new Error('DynamoDB error');
+      sendSpy.mockRejectedValue(error);
 
-        // Act
-        const result = await dynamodb.updateColors('John', 'red');
+      // Act & Assert
+      await expect(dynamodb.saveRecord(mockRecord)).rejects.toThrow('DynamoDB error');
+    });
+  });
 
-        // Assert
-        expect(result).toEqual(['blue', 'red']);
-        expect(updateColorsDocumentClientSpy).toHaveBeenCalledWith({
+  describe('updateColors', () => {
+    it('should successfully update colors for a record', async () => {
+      // Arrange
+      const response: DynamoDBResponse = {
+        Attributes: { colors: ['blue', 'red'] },
+      };
+      sendSpy.mockResolvedValue(response);
+
+      // Act
+      const result = await dynamodb.updateColors('John', 'red');
+
+      // Assert
+      expect(result).toEqual(['blue', 'red']);
+      expect(sendSpy).toHaveBeenCalledWith(expect.objectContaining({
+        input: {
           TableName: 'FavoriteColors',
           Key: { pk: 'John' },
           UpdateExpression: 'SET colors = list_append(if_not_exists(colors, :empty_list), :new_color)',
@@ -173,85 +161,80 @@ describe('DynamoDB Utils', () => {
             ':new_color': ['red'],
           },
           ReturnValues: 'UPDATED_NEW',
-        });
-      });
-
-      it('should handle errors', async () => {
-        // Arrange
-        const error = new Error('DynamoDB error');
-        updateColorsDocumentClientSpy.mockReturnValue({
-          promise: jest.fn().mockRejectedValue(error as never)
-        });
-
-        // Act & Assert
-        await expect(dynamodb.updateColors('John', 'red')).rejects.toThrow('DynamoDB error');
-      });
+        }
+      }));
     });
 
-    describe('saveColorSubmission', () => {
-      it('should successfully save a color submission', async () => {
-        // Arrange
-        const response: DynamoDBResponse = {};
-        saveColorSubmissionDocumentClientSpy.mockReturnValue({
-          promise: jest.fn().mockResolvedValue(response as never)
-        });
+    it('should handle errors', async () => {
+      // Arrange
+      const error = new Error('DynamoDB error');
+      sendSpy.mockRejectedValue(error);
 
-        // Act
-        const result = await dynamodb.saveColorSubmission(mockRecord);
+      // Act & Assert
+      await expect(dynamodb.updateColors('John', 'red')).rejects.toThrow('DynamoDB error');
+    });
+  });
 
-        // Assert
-        expect(result).toEqual(mockRecord);
-        expect(saveColorSubmissionDocumentClientSpy).toHaveBeenCalledWith({
+  describe('saveColorSubmission', () => {
+    it('should successfully save a color submission', async () => {
+      // Arrange
+      const response: DynamoDBResponse = {};
+      sendSpy.mockResolvedValue(response);
+
+      // Act
+      const result = await dynamodb.saveColorSubmission(mockRecord);
+
+      // Assert
+      expect(result).toEqual(mockRecord);
+      expect(sendSpy).toHaveBeenCalledWith(expect.objectContaining({
+        input: {
           TableName: 'FavoriteColors',
           Item: mockRecord,
-        });
-      });
-
-      it('should handle errors', async () => {
-        // Arrange
-        const error = new Error('DynamoDB error');
-        saveColorSubmissionDocumentClientSpy.mockReturnValue({
-          promise: jest.fn().mockRejectedValue(error as never)
-        });
-
-        // Act & Assert
-        await expect(dynamodb.saveColorSubmission(mockRecord)).rejects.toThrow('DynamoDB error');
-      });
+        }
+      }));
     });
 
-    describe('searchColors', () => {
-      it('should successfully search colors with a pk', async () => {
-        // Arrange
-        const response: DynamoDBResponse = {
-          Items: [mockRecord],
-        };
-        searchColorsDocumentClientSpy.mockReturnValue({
-          promise: jest.fn().mockResolvedValue(response as never)
-        });
+    it('should handle errors', async () => {
+      // Arrange
+      const error = new Error('DynamoDB error');
+      sendSpy.mockRejectedValue(error);
 
-        // Act
-        const result = await dynamodb.searchColors('John');
+      // Act & Assert
+      await expect(dynamodb.saveColorSubmission(mockRecord)).rejects.toThrow('DynamoDB error');
+    });
+  });
 
-        // Assert
-        expect(result).toEqual([mockRecord]);
-        expect(searchColorsDocumentClientSpy).toHaveBeenCalledWith({
+  describe('searchColors', () => {
+    it('should successfully search colors with a pk', async () => {
+      // Arrange
+      const response: DynamoDBResponse = {
+        Items: [mockRecord],
+      };
+      sendSpy.mockResolvedValue(response);
+
+      // Act
+      const result = await dynamodb.searchColors('John');
+
+      // Assert
+      expect(result).toEqual([mockRecord]);
+      expect(sendSpy).toHaveBeenCalledWith(expect.objectContaining({
+        input: {
           TableName: 'FavoriteColors',
           FilterExpression: 'begins_with(pk, :pk)',
           ExpressionAttributeValues: {
             ':pk': 'John',
           },
-        });
-      });
-
-      it('should handle errors', async () => {
-        // Arrange
-        const error = new Error('DynamoDB error');
-        searchColorsDocumentClientSpy.mockReturnValue({
-          promise: jest.fn().mockRejectedValue(error as never)
-        });
-
-        // Act & Assert
-        await expect(dynamodb.searchColors('John')).rejects.toThrow('DynamoDB error');
-      });
+        }
+      }));
     });
-  }); 
+
+    it('should handle errors', async () => {
+      // Arrange
+      const error = new Error('DynamoDB error');
+      sendSpy.mockRejectedValue(error);
+
+      // Act & Assert
+      await expect(dynamodb.searchColors('John')).rejects.toThrow('DynamoDB error');
+    });
+  });
+}); 

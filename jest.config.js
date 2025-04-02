@@ -21,5 +21,10 @@ module.exports = {
       lines: 80,
       statements: 80
     }
-  }
+  },
+  // Exclude generated files from coverage
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    '/src/generated/'
+  ],
 }; 

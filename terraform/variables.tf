@@ -52,4 +52,7 @@ variable "tags" {
     Environment = "dev"
     Project     = "FavoriteColor"
   }
-} 
+}
+
+# Add data source for AWS account ID if not already present
+data "aws_caller_identity" "current" {} 

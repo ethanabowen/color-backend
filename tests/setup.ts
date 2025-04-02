@@ -4,6 +4,7 @@ import { jest } from '@jest/globals';
 
 // Mock environment variables
 process.env.TABLE_NAME = 'FavoriteColors';
+process.env.DEBUG = '*';
 
 // Mock console.error to keep test output clean
 console.error = jest.fn();

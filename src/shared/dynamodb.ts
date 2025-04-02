@@ -1,22 +1,34 @@
-import { DynamoDB } from 'aws-sdk';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { 
+  DynamoDBDocumentClient, 
+  GetCommand, 
+  PutCommand, 
+  UpdateCommand,
+  ScanCommand
+} from '@aws-sdk/lib-dynamodb';
 import { ColorRecord } from './types';
 import DEBUG from './debug';
 
 export class DynamoDbConnector {
-  private dynamodb: DynamoDB.DocumentClient;
+  private docClient: DynamoDBDocumentClient;
   private tableName: string;
 
-  constructor(client?: DynamoDB.DocumentClient) {
-    this.dynamodb = client || new DynamoDB.DocumentClient();
+  constructor(client?: DynamoDBDocumentClient) {
+    if (client) {
+      this.docClient = client;
+    } else {
+      const ddbClient = new DynamoDBClient({});
+      this.docClient = DynamoDBDocumentClient.from(ddbClient);
+    }
     this.tableName = process.env.TABLE_NAME || '';
   }
 
   async getRecord(pk: string): Promise<ColorRecord | null> {
     try {
-      const result = await this.dynamodb.get({
+      const result = await this.docClient.send(new GetCommand({
         TableName: this.tableName,
         Key: { pk }
-      }).promise();
+      }));
 
       DEBUG('Get record result: %O', result);
       return result.Item as ColorRecord || null;
@@ -29,10 +41,10 @@ export class DynamoDbConnector {
 
   async saveRecord(record: ColorRecord): Promise<void> {
     try {
-      await this.dynamodb.put({
+      await this.docClient.send(new PutCommand({
         TableName: this.tableName,
         Item: record
-      }).promise();
+      }));
 
       DEBUG('Record saved successfully');
     } catch (error) {
@@ -44,7 +56,7 @@ export class DynamoDbConnector {
 
   async updateColors(pk: string, newColor: string): Promise<string[]> {
     try {
-      const result = await this.dynamodb.update({
+      const result = await this.docClient.send(new UpdateCommand({
         TableName: this.tableName,
         Key: { pk },
         UpdateExpression: 'SET colors = list_append(if_not_exists(colors, :empty_list), :new_color)',
@@ -53,7 +65,7 @@ export class DynamoDbConnector {
           ':new_color': [newColor]
         },
         ReturnValues: 'UPDATED_NEW'
-      }).promise();
+      }));
 
       DEBUG('Update colors result: %O', result);
 
@@ -66,10 +78,10 @@ export class DynamoDbConnector {
   }
 
   async saveColorSubmission(record: ColorRecord): Promise<ColorRecord> {
-    await this.dynamodb.put({
+    await this.docClient.send(new PutCommand({
       TableName: this.tableName,
       Item: record,
-    }).promise();
+    }));
     
     DEBUG('Color submission saved successfully');
 
@@ -77,16 +89,14 @@ export class DynamoDbConnector {
   }
 
   async searchColors(pk: string): Promise<ColorRecord[]> {
-    const params: DynamoDB.DocumentClient.ScanInput = {
+    const result = await this.docClient.send(new ScanCommand({
       TableName: this.tableName,
-    };
+      FilterExpression: 'begins_with(pk, :pk)',
+      ExpressionAttributeValues: {
+        ':pk': pk,
+      }
+    }));
 
-    params.FilterExpression = 'begins_with(pk, :pk)';
-    params.ExpressionAttributeValues = {
-      ':pk': pk,
-    };
-
-    const result = await this.dynamodb.scan(params).promise();
     DEBUG('Search results: %d items found', result.Items?.length || 0);
 
     return (result.Items || []) as ColorRecord[];

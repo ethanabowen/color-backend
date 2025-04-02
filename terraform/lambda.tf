@@ -14,6 +14,7 @@ resource "aws_lambda_function" "color_service" {
     variables = {
       TABLE_NAME  = aws_dynamodb_table.app_table.name
       WEBSITE_URL = "https://${aws_cloudfront_distribution.website.domain_name}"
+      DEBUG       = "*"
     }
   }
 
@@ -58,17 +59,32 @@ resource "aws_iam_role_policy" "lambda_policy" {
         Effect = "Allow"
         Action = [
           "dynamodb:PutItem",
-          "dynamodb:GetItem",
+          "dynamodb:GetItem"
+        ]
+        Resource = [
+          aws_dynamodb_table.app_table.arn
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "dynamodb:Query",
-          "dynamodb:Scan",
+          "dynamodb:Scan"
+        ]
+        Resource = [
+          aws_dynamodb_table.app_table.arn,
+          "${aws_dynamodb_table.app_table.arn}/index/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
         Resource = [
-          aws_dynamodb_table.app_table.arn,
-          "${aws_dynamodb_table.app_table.arn}/index/*",
-          "arn:aws:logs:*:*:*"
+          "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${aws_lambda_function.color_service.function_name}:*"
         ]
       }
     ]

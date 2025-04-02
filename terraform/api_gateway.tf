@@ -1,24 +1,20 @@
-# API Gateway
-resource "aws_apigatewayv2_api" "lambda_api" {
-  name          = "${var.project_name}-${var.environment}-api"
-  protocol_type = "HTTP"
-  description   = "API Gateway for Lambda functions"
+# Data source for the OpenAPI spec
+data "template_file" "api_spec" {
+  template = file("${path.module}/../openapi.yaml")
 
-  cors_configuration {
-    allow_credentials = false
-    allow_headers     = ["*"]
-    allow_methods     = ["GET", "POST", "OPTIONS"]
-    allow_origins     = ["https://${aws_cloudfront_distribution.website.domain_name}"]
-    expose_headers    = ["*"]
-    max_age          = 300
+  vars = {
+    lambda_invoke_arn = aws_lambda_function.color_service.invoke_arn
   }
 }
 
-# API Stage
-resource "aws_apigatewayv2_stage" "lambda_api" {
-  api_id = aws_apigatewayv2_api.lambda_api.id
-  name   = var.environment
-  auto_deploy = true
+# REST API Gateway with OpenAPI spec
+resource "aws_api_gateway_rest_api" "api" {
+  name = "${var.project_name}-${var.environment}-api"
+  body = data.template_file.api_spec.rendered
+
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
 
   tags = {
     Environment = var.environment
@@ -26,30 +22,95 @@ resource "aws_apigatewayv2_stage" "lambda_api" {
   }
 }
 
-# Lambda Integration
-resource "aws_apigatewayv2_integration" "color_service" {
-  api_id           = aws_apigatewayv2_api.lambda_api.id
-  integration_type = "AWS_PROXY"
+# API Gateway deployment
+resource "aws_api_gateway_deployment" "api" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
 
-  connection_type      = "INTERNET"
-  description         = "Color service Lambda integration"
-  integration_method  = "POST"
-  integration_uri     = aws_lambda_function.color_service.invoke_arn
-  payload_format_version = "2.0"
+  triggers = {
+    # Trigger redeployment when the API spec changes
+    redeployment = sha1(jsonencode(aws_api_gateway_rest_api.api.body))
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
-# API Routes
-resource "aws_apigatewayv2_route" "colors" {
-  api_id    = aws_apigatewayv2_api.lambda_api.id
-  route_key = "ANY /colors"
-  target    = "integrations/${aws_apigatewayv2_integration.color_service.id}"
+# API Gateway stage
+resource "aws_api_gateway_stage" "api" {
+  deployment_id = aws_api_gateway_deployment.api.id
+  rest_api_id  = aws_api_gateway_rest_api.api.id
+  stage_name   = var.environment
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+  }
 }
 
-# Lambda Permission
-resource "aws_lambda_permission" "color_service" {
+# Lambda permission for API Gateway
+resource "aws_lambda_permission" "api_gateway" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.color_service.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.lambda_api.execution_arn}/*/*"
+  source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
+}
+
+# CloudWatch logging for API Gateway
+resource "aws_api_gateway_account" "api" {
+  cloudwatch_role_arn = aws_iam_role.api_gateway_cloudwatch.arn
+}
+
+resource "aws_iam_role" "api_gateway_cloudwatch" {
+  name = "${var.project_name}-${var.environment}-api-gateway-cloudwatch"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "apigateway.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "api_gateway_cloudwatch" {
+  name = "${var.project_name}-${var.environment}-api-gateway-cloudwatch"
+  role = aws_iam_role.api_gateway_cloudwatch.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:DescribeLogGroups",
+          "logs:DescribeLogStreams",
+          "logs:PutLogEvents",
+          "logs:GetLogEvents",
+          "logs:FilterLogEvents"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# Enable CloudWatch logging for the stage
+resource "aws_api_gateway_method_settings" "api" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  stage_name  = aws_api_gateway_stage.api.stage_name
+  method_path = "*/*"
+
+  settings {
+    metrics_enabled = true
+    logging_level   = "INFO"
+  }
 } 

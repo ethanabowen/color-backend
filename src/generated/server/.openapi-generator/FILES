@@ -1,0 +1,13 @@
+.gitignore
+.openapi-generator-ignore
+api.ts
+api/apis.ts
+api/defaultApi.ts
+git_push.sh
+model/apiResponse.ts
+model/colorRecord.ts
+model/colorRecordArrayResponse.ts
+model/colorRecordResponse.ts
+model/colorSubmission.ts
+model/errorResponse.ts
+model/models.ts

@@ -9,6 +9,7 @@ servers:
     variables:
       api-id:
         description: API Gateway ID
+        default: default
       region:
         default: us-east-1
         description: AWS region
@@ -58,34 +59,47 @@ components:
           format: date-time
           description: Timestamp of the submission
 
-    ErrorResponse:
+    ApiResponse:
       type: object
       required:
-        - message
         - statusCode
       properties:
+        statusCode:
+          type: integer
+          description: HTTP status code
+        data:
+          description: Response data payload
         message:
           type: string
-          description: Error message
-        statusCode:
-          type: integer
-          description: HTTP status code
+          description: Optional message (primarily for errors)
 
-    SuccessResponse:
-      type: object
-      required:
-        - data
-        - statusCode
-      properties:
-        data:
-          oneOf:
-            - $ref: '#/components/schemas/ColorRecord'
-            - type: array
+    ColorRecordResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/ColorRecord'
+
+    ColorRecordArrayResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: array
               items:
                 $ref: '#/components/schemas/ColorRecord'
-        statusCode:
-          type: integer
-          description: HTTP status code
+
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          required:
+            - message
+          properties:
+            data:
+              type: null
 
   responses:
     Error:
@@ -99,6 +113,7 @@ paths:
   /colors:
     get:
       summary: Search colors by first name
+      operationId: getColors
       parameters:
         - in: query
           name: firstName
@@ -112,14 +127,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
+                $ref: '#/components/schemas/ColorRecordArrayResponse'
         '400':
           $ref: '#/components/responses/Error'
         '500':
           $ref: '#/components/responses/Error'
+      x-amazon-apigateway-integration:
+        uri: ${lambda_invoke_arn}
+        passthroughBehavior: when_no_match
+        httpMethod: POST
+        type: aws_proxy
 
     post:
       summary: Submit a new favorite color
+      operationId: postColors
       requestBody:
         required: true
         content:
@@ -132,14 +153,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
+                $ref: '#/components/schemas/ColorRecordResponse'
         '400':
           $ref: '#/components/responses/Error'
         '500':
           $ref: '#/components/responses/Error'
+      x-amazon-apigateway-integration:
+        uri: ${lambda_invoke_arn}
+        passthroughBehavior: when_no_match
+        httpMethod: POST
+        type: aws_proxy
 
     options:
       summary: CORS preflight request
+      operationId: optionsColors
       responses:
         '200':
           description: CORS preflight response
@@ -156,3 +183,33 @@ paths:
             Access-Control-Max-Age:
               schema:
                 type: string 
+      x-amazon-apigateway-integration:
+        uri: ${lambda_invoke_arn}
+        passthroughBehavior: when_no_match
+        httpMethod: POST
+        type: aws_proxy
+
+x-amazon-apigateway-binary-media-types:
+  - '*/*'
+
+x-amazon-apigateway-request-validators:
+  full:
+    validateRequestBody: true
+    validateRequestParameters: true
+
+x-amazon-apigateway-cors:
+  allowOrigins:
+    - '*'
+  allowMethods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
+  allowHeaders:
+    - Content-Type
+    - Authorization
+    - X-Amz-Date
+    - X-Api-Key
+    - X-Amz-Security-Token
+  maxAge: 3600

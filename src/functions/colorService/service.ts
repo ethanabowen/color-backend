@@ -7,12 +7,10 @@ export class ColorService {
   private dynamodbConnector: DynamoDbConnector;
   
   constructor(dynamodDbConnector?: DynamoDbConnector) {
-    DEBUG('Initializing ColorService');
     this.dynamodbConnector = dynamodDbConnector || new DynamoDbConnector();
   }
 
   async submitColor(submission: ColorSubmission): Promise<SuccessResponse<ColorRecord>> {
-    DEBUG('Processing color submission: %O', submission);
     
     const dynamoRecord: ColorRecord = {
       pk: submission.firstName,
@@ -32,7 +30,6 @@ export class ColorService {
   }
 
   async searchColors(firstName: string): Promise<SuccessResponse<ColorRecord[]>> {
-    DEBUG('Searching colors for firstName: %s', firstName);
     const results = await this.dynamodbConnector.searchColors(firstName);
     DEBUG('Found %d results', results.length);
     
