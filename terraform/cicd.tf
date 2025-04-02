@@ -20,6 +20,7 @@ resource "aws_iam_policy" "github_actions" {
           # AWS Gateway
           "apigateway:DELETE",
           "apigateway:GET",
+          "apigateway:PATCH",
           "apigateway:POST",
           "apigateway:PUT",
           
@@ -107,6 +108,7 @@ resource "aws_iam_policy" "github_actions" {
           aws_api_gateway_rest_api.api.arn,
           "${aws_api_gateway_rest_api.api.arn}/*",
           "${aws_api_gateway_rest_api.api.execution_arn}/*",
+          "arn:aws:apigateway:${var.aws_region}::/account",
           # CloudFront
           aws_cloudfront_cache_policy.website.arn,
           aws_cloudfront_distribution.website.arn,
@@ -119,6 +121,7 @@ resource "aws_iam_policy" "github_actions" {
           aws_iam_policy.frontend_deployment.arn,
           aws_iam_user.frontend_ci.arn,
           # IAM resources
+          aws_iam_role.api_gateway_cloudwatch.arn,
           aws_iam_role.lambda_role.arn,
           aws_iam_user.github_actions.arn,
           "arn:aws:iam::${var.aws_account_id}:policy/github-actions-policy",
