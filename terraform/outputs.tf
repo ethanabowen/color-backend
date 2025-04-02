@@ -19,13 +19,13 @@ output "dynamodb_table_arn" {
 }
 
 output "api_url" {
-  value       = "${aws_apigatewayv2_stage.lambda_api.invoke_url}"
+  value       = "${aws_api_gateway_rest_api.api.execution_arn}"
   description = "URL of the API Gateway endpoint"
 }
 
 output "api_gateway_arn" {
   description = "ARN of the API Gateway"
-  value       = aws_apigatewayv2_api.lambda_api.arn
+  value       = aws_api_gateway_rest_api.api.arn
 }
 
 output "color_service_function_name" {

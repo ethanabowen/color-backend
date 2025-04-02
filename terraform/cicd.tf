@@ -104,9 +104,9 @@ resource "aws_iam_policy" "github_actions" {
         ]
         Resource = [
           # Api Gateway
-          aws_apigatewayv2_api.lambda_api.arn,
-          "${aws_apigatewayv2_api.lambda_api.arn}/*",
-          "${aws_apigatewayv2_api.lambda_api.execution_arn}/*",
+          aws_api_gateway_rest_api.api.arn,
+          "${aws_api_gateway_rest_api.api.arn}/*",
+          "${aws_api_gateway_rest_api.api.execution_arn}/*",
           # CloudFront
           aws_cloudfront_cache_policy.website.arn,
           aws_cloudfront_distribution.website.arn,
