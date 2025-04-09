@@ -14,9 +14,10 @@
     "baseUrl": "./",
     "paths": {
       "@shared/*": ["src/shared/*"],
-      "@functions/*": ["src/functions/*"]
+      "@functions/*": ["src/functions/*"],
+      "@generated/*": ["src/generated/*"]
     }
   },
   "include": ["src/**/*", "scripts/**/*"],
-  "exclude": ["node_modules", "tests", "dist", "src/generated/**/*"]
+  "exclude": ["node_modules", "tests", "dist"]
 } 

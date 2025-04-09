@@ -1,4 +1,4 @@
-import { ColorSubmission, ColorRecord, SuccessResponse } from '@shared/types';
+import { ColorSubmission, ColorRecord } from '@generated/server/model/models';
 import { DynamoDbConnector } from '@shared/dynamodb';
 import DEBUG from '@shared/debug';
 import { omit } from 'lodash';
@@ -10,11 +10,10 @@ export class ColorService {
     this.dynamodbConnector = dynamodDbConnector || new DynamoDbConnector();
   }
 
-  async submitColor(submission: ColorSubmission): Promise<SuccessResponse<ColorRecord>> {
-    
+  async submitColor(submission: ColorSubmission): Promise<{ data: ColorRecord; statusCode: number }> {
     const dynamoRecord: ColorRecord = {
       pk: submission.firstName,
-      ...omit(submission, 'firstName'),
+      favoriteColor: submission.favoriteColor,
       colors: [submission.favoriteColor],
       timestamp: new Date().toISOString()
     };
@@ -29,7 +28,7 @@ export class ColorService {
     };
   }
 
-  async searchColors(firstName: string): Promise<SuccessResponse<ColorRecord[]>> {
+  async searchColors(firstName: string): Promise<{ data: ColorRecord[]; statusCode: number }> {
     const results = await this.dynamodbConnector.searchColors(firstName);
     DEBUG('Found %d results', results.length);
     

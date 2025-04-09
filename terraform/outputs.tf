@@ -19,7 +19,7 @@ output "dynamodb_table_arn" {
 }
 
 output "api_url" {
-  value       = "${aws_api_gateway_rest_api.api.execution_arn}"
+  value       = "https://${aws_api_gateway_rest_api.api.id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${var.environment}"
   description = "URL of the API Gateway endpoint"
 }
 

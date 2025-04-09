@@ -1,151 +1,118 @@
-import { APIGatewayProxyHandler, APIGatewayProxyResult, APIGatewayProxyEvent } from 'aws-lambda';
-import serverless from 'serverless-http';
-import express, { Request, Response } from 'express';
-import { json } from 'body-parser';
+import { APIGatewayProxyHandler, APIGatewayProxyEvent } from 'aws-lambda';
 import { ColorSubmission } from '@shared/types';
 import { ColorService } from './service';
-import debug from '../../shared/debug';
-
-// Extend Request type to include API Gateway event
-interface ApiGatewayRequest extends Request {
-  apiGateway?: {
-    event: APIGatewayProxyEvent;
-  };
-}
+import debug from '@shared/debug';
+import { successResponse, badResponse, errorResponse } from './responses';
+import { ColorRecordResponse, ColorRecordArrayResponse, ErrorResponse } from '@generated/server/model/models';
 
 // Initialize service
 const colorService = new ColorService();
 
-// Create Express app (won't actually run as a server)
-const app = express();
-
-// Configure body parsing middleware
-app.use((req: ApiGatewayRequest, res, next) => {
-  if (req.apiGateway?.event) {
-    const event = req.apiGateway.event;
-    debug('Received event:', event.body);
-    if (event.body) {
-      try {
-        req.body = JSON.parse(event.body);
-      } catch (error) {
-        debug('Error parsing body:', error);
-      }
-    }
+// Helper function
+const getDecodedBody = (event: APIGatewayProxyEvent): string => {
+  if (!event.body) {
+    throw new Error('Missing request body');
   }
-  next();
-});
+  return event.isBase64Encoded 
+    ? Buffer.from(event.body, 'base64').toString('utf-8')
+    : event.body;
+};
 
-// Configure JSON parsing
-app.use(express.json());
-
-// Get colors
-app.get('/colors', async (req: ApiGatewayRequest, res: Response) => {
-  const firstName = req.query.firstName as string;
-  debug('Received event:', firstName);
-
+// Route handlers
+const getColors = async (event: APIGatewayProxyEvent): Promise<ColorRecordArrayResponse | ErrorResponse> => {
+  const firstName = event.queryStringParameters?.firstName;
+  
   if (!firstName) {
-    debug('Missing firstName parameter');
-    return res.status(400).json({
-      message: 'Missing required firstName parameter',
-    });
-  }
-
-  debug('Searching colors for firstName:', firstName);
-  try {
-    const result = await colorService.searchColors(firstName);
-    debug('Search results:', result);
-    return res.status(result.statusCode).json(result.data);
-  } catch (error) {
-    debug('Error searching colors:', error);
-    return res.status(500).json({
-      message: 'Internal server error',
-      statusCode: 500,
-    });
-  }
-});
-
-// Submit color
-app.post('/colors', async (req: ApiGatewayRequest, res: Response) => {
-  debug('* Received event:', req.body);
-
-  if (!req.body) {
-    return res.status(400).json({
-      message: 'Missing request body',
-    });
-  }
-
-  const { firstName, favoriteColor } = req.body;
-
-  if (!firstName || !favoriteColor) {
-    return res.status(400).json({
-      message: 'Missing required fields',
-    });
-  }
-
-  try {
-    const result = await colorService.submitColor({
-      firstName: firstName,
-      favoriteColor: favoriteColor,
-    });
-    return res.status(201).json(result.data);
-  } catch (error) {
-    debug('Error submitting color:', error);
-    return res.status(500).json({
-      message: 'Internal server error',
-      statusCode: 500,
-    });
-  }
-});
-
-// Options for CORS preflight
-app.options('/colors', (req: ApiGatewayRequest, res) => {
-  debug('* Received event:', req.body);
-
-  const headers = {
-    'Access-Control-Allow-Origin': process.env.WEBSITE_URL || '',
-    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-    'Access-Control-Allow-Headers': '*',
-    'Access-Control-Max-Age': '300',
-  };
-
-  res.set(headers).status(200).json({ message: 'OK' });
-});
-
-// Handle 405 Method Not Allowed
-app.use('/colors', (req, res) => {
-  res.status(405).json({
-    message: 'Method not allowed',
-  });
-});
-
-// Create handler using serverless-http
-const serverlessHandler = serverless(app, {
-  binary: false,
-  request: (request: any, event: any) => {
-    // Add CORS headers to all responses
-    request.headers['access-control-allow-origin'] = process.env.WEBSITE_URL || '';
-    request.headers['access-control-allow-methods'] = 'GET,POST,OPTIONS';
-    request.headers['access-control-allow-headers'] = '*';
-    request.headers['access-control-max-age'] = '300';
-    
-    // Pass through API Gateway event if needed
-    request.apiGateway = { event };
-  }
-});
-
-export const handler: APIGatewayProxyHandler = async (event, context) => {
-  try {
-    // Handle the request using serverless-http
-    const response = await serverlessHandler(event, context);
-    return response as APIGatewayProxyResult;
-  } catch (error) {
-    console.error('Unhandled error:', error);
     return {
-      statusCode: 500,
-      body: JSON.stringify({ 
-        message: 'Internal server error',
-        statusCode: 500
-      })
+      message: 'Missing required firstName parameter',
+      statusCode: 400
     };
   }
-}; 
+
+  try {
+    const result = await colorService.searchColors(firstName);
+    return {
+      data: result.data,
+      statusCode: result.statusCode
+    };
+  } catch (error) {
+    debug('Error searching colors:', error);
+    return {
+      message: 'Internal server error',
+      statusCode: 500
+    };
+  }
+};
+
+const submitColor = async (event: APIGatewayProxyEvent): Promise<ColorRecordResponse | ErrorResponse> => {
+  try {
+    const decodedBody = getDecodedBody(event);
+    const body = JSON.parse(decodedBody) as ColorSubmission;
+    const { firstName, favoriteColor } = body;
+
+    if (!firstName || !favoriteColor) {
+      return {
+        message: 'Missing required fields',
+        statusCode: 400
+      };
+    }
+
+    const result = await colorService.submitColor({ firstName, favoriteColor });
+    return {
+      data: result.data,
+      statusCode: 201
+    };
+  } catch (error) {
+    debug('Error submitting color:', error);
+    return {
+      message: 'Internal server error',
+      statusCode: 500
+    };
+  }
+};
+
+// Main handler
+export const handler: APIGatewayProxyHandler = async (event, context) => {
+  debug('Incoming event:', event);
+  debug('Incoming context:', context);
+
+  if (!event?.httpMethod || !event?.path) {
+    return errorResponse(new Error('Invalid event structure'));
+  }
+
+  try {
+    // CORS preflight
+    if (event.httpMethod === 'OPTIONS') {
+      return successResponse(null);
+    }
+
+    // Route handling
+    if (event.path === '/colors') {
+      let response: ColorRecordResponse | ColorRecordArrayResponse | ErrorResponse;
+      
+      switch (event.httpMethod) {
+        case 'GET':
+          response = await getColors(event);
+          break;
+        case 'POST':
+          response = await submitColor(event);
+          break;
+        default:
+          response = {
+            message: 'Method not allowed',
+            statusCode: 405
+          };
+      }
+      
+      if (response.statusCode >= 400) {
+        return badResponse(response.message || 'Error occurred', response.statusCode);
+      }
+      return successResponse(response.data, response.statusCode);
+    }
+
+    return badResponse('Not found', 404);
+  } catch (error) {
+    debug('Unhandled error:', error);
+    return errorResponse(error as Error);
+  }
+};
