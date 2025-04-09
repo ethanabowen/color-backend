@@ -51,7 +51,7 @@ jobs:
           terraform init
           terraform apply -auto-approve \
             -var="environment=${{ env.ENVIRONMENT }}" \
-            -var="project_name=favorite-color" \
+            -var="project_name=color" \
             -var="aws_account_id=${{ vars.AWS_ACCOUNT_ID_${{ env.ENVIRONMENT }} }}"
 ```
 
@@ -86,7 +86,7 @@ jobs:
           terraform init
           terraform apply -auto-approve \
             -var="environment=${{ github.event.inputs.environment || 'dev' }}" \
-            -var="project_name=favorite-color" \
+            -var="project_name=color" \
             -var="aws_account_id=${{ vars.AWS_ACCOUNT_ID_${{ github.event.inputs.environment || 'dev' }} }}"
 ```
 

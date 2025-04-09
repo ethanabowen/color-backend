@@ -1,7 +1,7 @@
 variable "project_name" {
   description = "Name of the project"
   type        = string
-  default     = "favorite-color"
+  default     = "color"
 }
 
 variable "environment" {
@@ -50,7 +50,7 @@ variable "tags" {
   default = {
     Terraform   = "true"
     Environment = "dev"
-    Project     = "FavoriteColor"
+    Project     = "Color"
   }
 }
 

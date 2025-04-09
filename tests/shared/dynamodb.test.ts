@@ -1,6 +1,6 @@
 import { jest, describe, it, expect, beforeEach, afterAll } from '@jest/globals';
 import { DynamoDbConnector } from '../../src/shared/dynamodb';
-import { ColorRecord } from '../../src/shared/types';
+import { ColorRecord } from '../../src/generated/server';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 
 type DynamoDBResponse = {
@@ -16,14 +16,13 @@ describe('DynamoDB Utils', () => {
 
   const mockRecord: ColorRecord = {
     pk: 'John',
-    favoriteColor: 'blue',
     colors: ['blue'],
     timestamp: '2024-01-01T00:00:00.000Z',
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env.TABLE_NAME = 'FavoriteColors';
+    process.env.TABLE_NAME = 'Colors';
     process.env.DEBUG = '*';
 
     docClient = {
@@ -82,7 +81,7 @@ describe('DynamoDB Utils', () => {
       expect(result).toEqual(mockRecord);
       expect(sendSpy).toHaveBeenCalledWith(expect.objectContaining({
         input: {
-          TableName: 'FavoriteColors',
+          TableName: 'Colors',
           Key: { pk: 'John' },
         }
       }));
@@ -122,7 +121,7 @@ describe('DynamoDB Utils', () => {
       // Assert
       expect(sendSpy).toHaveBeenCalledWith(expect.objectContaining({
         input: {
-          TableName: 'FavoriteColors',
+          TableName: 'Colors',
           Item: mockRecord,
         }
       }));
@@ -147,20 +146,20 @@ describe('DynamoDB Utils', () => {
       sendSpy.mockResolvedValue(response);
 
       // Act
-      const result = await dynamodb.updateColors('John', 'red');
+      const result = await dynamodb.updateColors(mockRecord);
 
       // Assert
-      expect(result).toEqual(['blue', 'red']);
+      expect(result).toEqual({ "colors": ['blue', 'red'] });
       expect(sendSpy).toHaveBeenCalledWith(expect.objectContaining({
         input: {
-          TableName: 'FavoriteColors',
+          TableName: 'Colors',
           Key: { pk: 'John' },
           UpdateExpression: 'SET colors = list_append(if_not_exists(colors, :empty_list), :new_color)',
           ExpressionAttributeValues: {
             ':empty_list': [],
-            ':new_color': ['red'],
+            ':new_color': ['blue'],
           },
-          ReturnValues: 'UPDATED_NEW',
+          ReturnValues: 'ALL_NEW',
         }
       }));
     });
@@ -171,7 +170,7 @@ describe('DynamoDB Utils', () => {
       sendSpy.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(dynamodb.updateColors('John', 'red')).rejects.toThrow('DynamoDB error');
+      await expect(dynamodb.updateColors(mockRecord)).rejects.toThrow('DynamoDB error');
     });
   });
 
@@ -188,7 +187,7 @@ describe('DynamoDB Utils', () => {
       expect(result).toEqual(mockRecord);
       expect(sendSpy).toHaveBeenCalledWith(expect.objectContaining({
         input: {
-          TableName: 'FavoriteColors',
+          TableName: 'Colors',
           Item: mockRecord,
         }
       }));
@@ -207,8 +206,8 @@ describe('DynamoDB Utils', () => {
   describe('searchColors', () => {
     it('should successfully search colors with a pk', async () => {
       // Arrange
-      const response: DynamoDBResponse = {
-        Items: [mockRecord],
+      const response = {
+        Item: { pk: 'John', colors: ['red'], timestamp: Date.now() }
       };
       sendSpy.mockResolvedValue(response);
 
@@ -216,14 +215,11 @@ describe('DynamoDB Utils', () => {
       const result = await dynamodb.searchColors('John');
 
       // Assert
-      expect(result).toEqual([mockRecord]);
+      expect(result).toEqual(response.Item);
       expect(sendSpy).toHaveBeenCalledWith(expect.objectContaining({
         input: {
-          TableName: 'FavoriteColors',
-          FilterExpression: 'begins_with(pk, :pk)',
-          ExpressionAttributeValues: {
-            ':pk': 'John',
-          },
+          TableName: 'Colors',
+          Key: { pk: 'John' }
         }
       }));
     });

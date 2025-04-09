@@ -5,7 +5,7 @@ import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 import { handler } from '../../../src/functions/colorService/handler';
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context, APIGatewayEventDefaultAuthorizerContext } from 'aws-lambda';
 import { ColorService } from '../../../src/functions/colorService/service';
-import { ColorSubmission } from '../../../src/shared/types';
+import { ColorSubmission } from '../../../src/generated/server';
 
 const createMockRequestContext = (method: string) => ({
   accountId: '123456789012',
@@ -77,12 +77,12 @@ const mockContext: Context = {
 };
 
 describe('colorService Lambda', () => {
-  let submitColorSpy: any;
+  let saveColorSpy: any;
   let searchColorsSpy: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    submitColorSpy = jest.spyOn(ColorService.prototype, 'submitColor');
+    saveColorSpy = jest.spyOn(ColorService.prototype, 'saveColor');
     searchColorsSpy = jest.spyOn(ColorService.prototype, 'searchColors');
   });
 
@@ -91,7 +91,7 @@ describe('colorService Lambda', () => {
       // Arrange
       const mockSubmission: ColorSubmission = {
         firstName: 'John',
-        favoriteColor: 'blue',
+        color: 'blue',
       };
       const mockEvent = createMockEvent({
         method: 'POST',
@@ -100,14 +100,13 @@ describe('colorService Lambda', () => {
       const mockResponse = {
         data: {
           pk: 'John',
-          favoriteColor: 'blue',
           colors: ['blue'],
           timestamp: '2024-01-01T00:00:00.000Z',
         },
         statusCode: 201,
       };
 
-      submitColorSpy.mockImplementation(() => Promise.resolve(mockResponse as never));
+      saveColorSpy.mockImplementation(() => Promise.resolve(mockResponse as never));
 
       // Act
       const response = await handler(mockEvent, mockContext, () => {}) as APIGatewayProxyResult;
@@ -126,7 +125,7 @@ describe('colorService Lambda', () => {
         data: mockResponse.data,
         statusCode: 201
       });
-      expect(submitColorSpy).toHaveBeenCalledWith(mockSubmission);
+      expect(saveColorSpy).toHaveBeenCalledWith(mockSubmission);
     });
 
     it('should return 400 when required fields are missing', async () => {
@@ -146,20 +145,20 @@ describe('colorService Lambda', () => {
         message: 'Missing required fields',
         statusCode: 400
       });
-      expect(submitColorSpy).not.toHaveBeenCalled();
+      expect(saveColorSpy).not.toHaveBeenCalled();
     });
 
     it('should return 500 when service operation fails', async () => {
       // Arrange
       const mockSubmission: ColorSubmission = {
         firstName: 'John',
-        favoriteColor: 'blue',
+        color: 'blue',
       };
       const mockEvent = createMockEvent({
         method: 'POST',
         body: mockSubmission
       });
-      submitColorSpy.mockRejectedValue(new Error('Internal server error') as never);
+      saveColorSpy.mockRejectedValue(new Error('Internal server error') as never);
 
       // Act
       const response = await handler(mockEvent, mockContext, () => {}) as APIGatewayProxyResult;
@@ -171,7 +170,7 @@ describe('colorService Lambda', () => {
         message: 'Internal server error',
         statusCode: 500
       });
-      expect(submitColorSpy).toHaveBeenCalledWith(mockSubmission);
+      expect(saveColorSpy).toHaveBeenCalledWith(mockSubmission);
     });
   });
 
@@ -187,7 +186,6 @@ describe('colorService Lambda', () => {
         data: [
           {
             pk: 'John',
-            favoriteColor: 'blue',
             colors: ['blue'],
             timestamp: '2024-01-01T00:00:00.000Z',
           },
@@ -313,7 +311,7 @@ describe('colorService Lambda', () => {
         message: 'Method not allowed',
         statusCode: 405
       });
-      expect(submitColorSpy).not.toHaveBeenCalled();
+      expect(saveColorSpy).not.toHaveBeenCalled();
     });
   });
 }); 

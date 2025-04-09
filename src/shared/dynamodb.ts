@@ -6,7 +6,8 @@ import {
   UpdateCommand,
   ScanCommand
 } from '@aws-sdk/lib-dynamodb';
-import { ColorRecord } from './types';
+import { ColorRecord } from '@generated/server';
+
 import DEBUG from './debug';
 
 export class DynamoDbConnector {
@@ -54,22 +55,21 @@ export class DynamoDbConnector {
     }
   }
 
-  async updateColors(pk: string, newColor: string): Promise<string[]> {
+  async updateColors(record: ColorRecord): Promise<ColorRecord> {
     try {
       const result = await this.docClient.send(new UpdateCommand({
         TableName: this.tableName,
-        Key: { pk },
+        Key: { pk: record.pk },
         UpdateExpression: 'SET colors = list_append(if_not_exists(colors, :empty_list), :new_color)',
         ExpressionAttributeValues: {
           ':empty_list': [],
-          ':new_color': [newColor]
+          ':new_color': record.colors
         },
-        ReturnValues: 'UPDATED_NEW'
+        ReturnValues: 'ALL_NEW'
       }));
 
       DEBUG('Update colors result: %O', result);
-
-      return result.Attributes?.colors || [newColor];
+      return result.Attributes as ColorRecord;
     } catch (error) {
       DEBUG('Error updating colors: %O', error);
       console.error('Error updating colors:', error);
@@ -84,21 +84,21 @@ export class DynamoDbConnector {
     }));
     
     DEBUG('Color submission saved successfully');
-
     return record;
   }
 
-  async searchColors(pk: string): Promise<ColorRecord[]> {
-    const result = await this.docClient.send(new ScanCommand({
+  async searchColors(pk: string): Promise<ColorRecord> {
+    const result = await this.docClient.send(new GetCommand({
       TableName: this.tableName,
-      FilterExpression: 'begins_with(pk, :pk)',
-      ExpressionAttributeValues: {
-        ':pk': pk,
-      }
+      Key: { pk }
     }));
 
-    DEBUG('Search results: %d items found', result.Items?.length || 0);
+    DEBUG('Search results: %O', result);
 
-    return (result.Items || []) as ColorRecord[];
+    if (!result.Item) {
+      throw new Error(`No record found for pk: ${pk}`);
+    }
+
+    return result.Item as ColorRecord;
   }
 }

@@ -1,6 +1,6 @@
 /**
- * Favorite Color API
- * API for managing favorite colors
+ * Color API
+ * API for managing user\'s colors
  *
  * The version of the OpenAPI document: 1.0.0
  * 

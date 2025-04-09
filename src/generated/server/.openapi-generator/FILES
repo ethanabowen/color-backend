@@ -9,7 +9,6 @@ git_push.sh
 index.ts
 model/apiResponse.ts
 model/colorRecord.ts
-model/colorRecordArrayResponse.ts
 model/colorRecordResponse.ts
 model/colorSubmission.ts
 model/errorResponse.ts

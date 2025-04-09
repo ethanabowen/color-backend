@@ -1,5 +1,5 @@
 import { APIGatewayProxyResult } from 'aws-lambda';
-import { ColorRecordResponse, ColorRecordArrayResponse, ErrorResponse, ColorRecord } from '@generated/server/model/models';
+import { ColorRecordResponse, ErrorResponse, ColorRecord } from '@generated/server/model/models';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': process.env.WEBSITE_URL || '',
@@ -9,17 +9,16 @@ const corsHeaders = {
   'Content-Type': 'application/json'
 };
 
-const createResponse = (statusCode: number, body: ColorRecordResponse | ColorRecordArrayResponse | ErrorResponse): APIGatewayProxyResult => ({
+const createResponse = (statusCode: number, body: ColorRecordResponse | ErrorResponse): APIGatewayProxyResult => ({
   statusCode,
   headers: corsHeaders,
   body: JSON.stringify(body)
 });
 
-export function successResponse(data: ColorRecord[], statusCode?: number): APIGatewayProxyResult;
 export function successResponse(data: ColorRecord | null, statusCode?: number): APIGatewayProxyResult;
-export function successResponse(data: ColorRecord | ColorRecord[] | null, statusCode = 200): APIGatewayProxyResult {
+export function successResponse(data: ColorRecord | null, statusCode = 200): APIGatewayProxyResult {
   if (Array.isArray(data)) {
-    const response: ColorRecordArrayResponse = {
+    const response: ColorRecordResponse = {
       statusCode,
       data: data
     };

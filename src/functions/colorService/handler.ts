@@ -1,9 +1,9 @@
 import { APIGatewayProxyHandler, APIGatewayProxyEvent } from 'aws-lambda';
-import { ColorSubmission } from '@shared/types';
+import { ColorSubmission } from '@generated/server';
 import { ColorService } from './service';
 import debug from '@shared/debug';
 import { successResponse, badResponse, errorResponse } from './responses';
-import { ColorRecordResponse, ColorRecordArrayResponse, ErrorResponse } from '@generated/server/model/models';
+import { ColorRecordResponse, ErrorResponse } from '@generated/server/model/models';
 
 // Initialize service
 const colorService = new ColorService();
@@ -19,7 +19,7 @@ const getDecodedBody = (event: APIGatewayProxyEvent): string => {
 };
 
 // Route handlers
-const getColors = async (event: APIGatewayProxyEvent): Promise<ColorRecordArrayResponse | ErrorResponse> => {
+const getColors = async (event: APIGatewayProxyEvent): Promise<ColorRecordResponse | ErrorResponse> => {
   const firstName = event.queryStringParameters?.firstName;
   
   if (!firstName) {
@@ -44,20 +44,20 @@ const getColors = async (event: APIGatewayProxyEvent): Promise<ColorRecordArrayR
   }
 };
 
-const submitColor = async (event: APIGatewayProxyEvent): Promise<ColorRecordResponse | ErrorResponse> => {
+const saveColor = async (event: APIGatewayProxyEvent): Promise<ColorRecordResponse | ErrorResponse> => {
   try {
     const decodedBody = getDecodedBody(event);
     const body = JSON.parse(decodedBody) as ColorSubmission;
-    const { firstName, favoriteColor } = body;
+    const { firstName, color } = body;
 
-    if (!firstName || !favoriteColor) {
+    if (!firstName || !color) {
       return {
         message: 'Missing required fields',
         statusCode: 400
       };
     }
 
-    const result = await colorService.submitColor({ firstName, favoriteColor });
+    const result = await colorService.saveColor({ firstName, color });
     return {
       data: result.data,
       statusCode: 201
@@ -88,14 +88,14 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
     // Route handling
     if (event.path === '/colors') {
-      let response: ColorRecordResponse | ColorRecordArrayResponse | ErrorResponse;
+      let response: ColorRecordResponse | ErrorResponse;
       
       switch (event.httpMethod) {
         case 'GET':
           response = await getColors(event);
           break;
         case 'POST':
-          response = await submitColor(event);
+          response = await saveColor(event);
           break;
         default:
           response = {

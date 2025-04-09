@@ -1,6 +1,6 @@
 import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 import { ColorService } from '../../../src/functions/colorService/service';
-import { ColorSubmission, ColorRecord } from '../../../src/shared/types';
+import { ColorSubmission, ColorRecord } from '../../../src/generated/server';
 import { DynamoDbConnector } from '../../../src/shared/dynamodb';
 
 //jest.mock('../../../src/shared/dynamodb');
@@ -26,18 +26,17 @@ describe('ColorService', () => {
       // Arrange
       const submission: ColorSubmission = {
         firstName: 'John',
-        favoriteColor: 'blue',
+        color: 'blue',
       };
       const mockRecord: ColorRecord = {
         pk: 'John',
-        favoriteColor: 'blue',
         colors: ['blue'],
         timestamp: expect.any(String) as unknown as string
       };
       saveColorSubmissionSpy.mockResolvedValue(mockRecord as never);
 
       // Act
-      const result = await service.submitColor(submission);
+      const result = await service.saveColor(submission);
 
       // Assert
       expect(result).toEqual({
@@ -46,7 +45,6 @@ describe('ColorService', () => {
       });
       expect(saveColorSubmissionSpy).toHaveBeenCalledWith({
         pk: 'John',
-        favoriteColor: 'blue',
         colors: ['blue'],
         timestamp: expect.any(String)
       });
@@ -56,12 +54,12 @@ describe('ColorService', () => {
       // Arrange
       const submission: ColorSubmission = {
         firstName: 'John',
-        favoriteColor: 'blue',
+        color: 'blue',
       };
       saveColorSubmissionSpy.mockRejectedValue(new Error('DynamoDB error') as never);
 
       // Act & Assert
-      await expect(service.submitColor(submission)).rejects.toThrow('DynamoDB error');
+      await expect(service.saveColor(submission)).rejects.toThrow('DynamoDB error');
     });
   });
 
@@ -72,7 +70,6 @@ describe('ColorService', () => {
       const mockRecords: ColorRecord[] = [
         {
           pk: 'John',
-          favoriteColor: 'blue',
           colors: ['blue'],
           timestamp: '2024-01-01T00:00:00.000Z',
         },

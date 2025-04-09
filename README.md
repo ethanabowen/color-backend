@@ -1,34 +1,28 @@
-# Favorite Color Backend
+# Color Backend
 
-This is the backend service for the Favorite Color application, built with TypeScript and AWS Lambda.
+This is the backend service for the Color application, built with TypeScript and AWS Lambda. The API is defined using OpenAPI specifications and generates TypeScript types and interfaces automatically.
 
-## Infrastructure
+## Project Structure
 
-The backend infrastructure is managed using Terraform and includes:
+```
+color-backend/
+├── src/
+│   ├── functions/          # Lambda function handlers
+│   │   ├── submitColor/    # Color submission function
+│   │   └── searchColors/   # Color search function
+│   ├── generated/         # Auto-generated types and interfaces
+│   └── shared/            # Shared types and utilities
+├── tests/                 # Test files
+├── terraform/            # Infrastructure as code
+└── openapi.yaml         # API specification
+```
 
-- Lambda Functions for color submission and search
-- API Gateway for HTTP endpoints
-- DynamoDB table for data storage
-- S3 bucket for static website hosting
-- CloudFront distribution for CDN
-- WAF for security
-- ACM certificate for HTTPS
-- Route53 DNS configuration
-
-### Prerequisites
+## Prerequisites
 
 - Node.js 18.x
 - AWS CLI configured with appropriate credentials
 - Terraform 1.x
 - AWS account with necessary permissions
-
-### Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `TABLE_NAME` | DynamoDB table name |
-| `WEBSITE_URL` | Frontend URL for CORS |
-| `DEBUG` | Set to enable debug logging (e.g., `DEBUG=*app*`) |
 
 ## Development Setup
 
@@ -37,17 +31,23 @@ The backend infrastructure is managed using Terraform and includes:
    npm install
    ```
 
-2. Build the project:
+2. Generate TypeScript types (requires specs-generation project):
+   ```bash
+   cd ../specs-generation
+   npm run generate:server
+   ```
+
+3. Build the project:
    ```bash
    npm run build
    ```
 
-3. Run type checking:
+4. Run type checking:
    ```bash
    npm run type-check
    ```
 
-4. Run tests:
+5. Run tests:
    ```bash
    npm test
    ```
@@ -61,7 +61,7 @@ The backend infrastructure is managed using Terraform and includes:
   ```json
   {
     "firstName": "string",
-    "favoriteColor": "string"
+    "color": "string"
   }
   ```
 - **Response**:
@@ -69,7 +69,7 @@ The backend infrastructure is managed using Terraform and includes:
   {
     "data": {
       "firstName": "string",
-      "favoriteColor": "string",
+      "color": "string",
       "timestamp": "string"
     },
     "statusCode": 201
@@ -87,7 +87,7 @@ The backend infrastructure is managed using Terraform and includes:
     "data": [
       {
         "firstName": "string",
-        "favoriteColor": "string",
+        "color": "string",
         "timestamp": "string"
       }
     ],
@@ -95,7 +95,20 @@ The backend infrastructure is managed using Terraform and includes:
   }
   ```
 
-## Infrastructure Deployment
+## Infrastructure
+
+The backend infrastructure is managed using Terraform and includes:
+
+- Lambda Functions for color submission and search
+- API Gateway for HTTP endpoints
+- DynamoDB table for data storage
+- S3 bucket for static website hosting
+- CloudFront distribution for CDN
+- WAF for security
+- ACM certificate for HTTPS
+- Route53 DNS configuration
+
+### Infrastructure Deployment
 
 1. Navigate to the Terraform directory:
    ```bash
@@ -111,9 +124,17 @@ The backend infrastructure is managed using Terraform and includes:
    ```bash
    terraform apply \
      -var="environment=dev" \
-     -var="project_name=favorite-color" \
+     -var="project_name=color" \
      -var="route53_zone_id=your-zone-id"
    ```
+
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `TABLE_NAME` | DynamoDB table name |
+| `WEBSITE_URL` | Frontend URL for CORS |
+| `DEBUG` | Set to enable debug logging (e.g., `DEBUG=*app*`) |
 
 ## CI/CD Pipeline
 
@@ -123,8 +144,10 @@ The backend uses GitHub Actions for CI/CD:
    - Type checking
    - Unit tests
    - Integration tests
+   - OpenAPI specification validation
 
 2. **Deploy Job** (main branch only):
+   - Generate TypeScript types
    - Build TypeScript
    - Deploy infrastructure with Terraform
    - Update API Gateway
@@ -133,30 +156,17 @@ Required GitHub Secrets:
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
 
-## Project Structure
+## Debugging
 
-```
-favorite-color-backend/
-├── src/
-│   ├── functions/          # Lambda function handlers
-│   │   ├── submitColor/    # Color submission function
-│   │   └── searchColors/   # Color search function
-│   └── shared/            # Shared types and utilities
-├── tests/                 # Test files
-├── terraform/            # Infrastructure as code
-└── package.json         # Project dependencies
-```
+The application uses the [debug](https://www.npmjs.com/package/debug) package for conditional debugging:
 
-## Testing
+- Set `DEBUG=*app*` environment variable to enable debug logs
+- Debug output includes timestamps and formatted data
+- Works in both local development and Lambda environments
 
-### Unit Tests
+Example local development with debug enabled:
 ```bash
-npm test
-```
-
-### Integration Tests
-```bash
-npm run test:integration
+DEBUG=* npm run dev
 ```
 
 ## Contributing
@@ -168,24 +178,4 @@ npm run test:integration
 
 ## License
 
-MIT 
-
-## Debugging
-
-The application uses the [debug](https://www.npmjs.com/package/debug) package for conditional debugging:
-
-- Set `DEBUG=*app*` environment variable to enable debug logs
-- Debug output includes timestamps and formatted data
-- Works in both local development and Lambda environments
-
-Debug logs are added to key operations:
-- API request handling
-- DynamoDB operations
-- Error handling
-
-Example local development with debug enabled:
-```bash
-DEBUG=* npm run dev
-```
-
-In AWS Lambda, you can set the DEBUG environment variable in the Lambda configuration. 
+MIT

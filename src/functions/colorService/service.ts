@@ -10,11 +10,10 @@ export class ColorService {
     this.dynamodbConnector = dynamodDbConnector || new DynamoDbConnector();
   }
 
-  async submitColor(submission: ColorSubmission): Promise<{ data: ColorRecord; statusCode: number }> {
+  async saveColor(submission: ColorSubmission): Promise<{ data: ColorRecord; statusCode: number }> {
     const dynamoRecord: ColorRecord = {
       pk: submission.firstName,
-      favoriteColor: submission.favoriteColor,
-      colors: [submission.favoriteColor],
+      colors: [submission.color],
       timestamp: new Date().toISOString()
     };
     
@@ -28,12 +27,12 @@ export class ColorService {
     };
   }
 
-  async searchColors(firstName: string): Promise<{ data: ColorRecord[]; statusCode: number }> {
-    const results = await this.dynamodbConnector.searchColors(firstName);
-    DEBUG('Found %d results', results.length);
+  async searchColors(firstName: string): Promise<{ data: ColorRecord; statusCode: number }> {
+    const result = await this.dynamodbConnector.searchColors(firstName);
+    DEBUG('Found result: %O', result);
     
     return {
-      data: results,
+      data: result,
       statusCode: 200
     };
   }

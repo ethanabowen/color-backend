@@ -3,7 +3,7 @@ import { beforeEach } from 'node:test';
 import { jest } from '@jest/globals';
 
 // Mock environment variables
-process.env.TABLE_NAME = 'FavoriteColors';
+process.env.TABLE_NAME = 'Colors';
 process.env.DEBUG = '*';
 
 // Mock console.error to keep test output clean

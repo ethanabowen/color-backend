@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
-  title: Favorite Color API
-  description: API for managing favorite colors
+  title: Color API
+  description: API for managing user's colors
   version: 1.0.0
 
 servers:
@@ -26,29 +26,25 @@ components:
       type: object
       required:
         - firstName
-        - favoriteColor
+        - color
       properties:
         firstName:
           type: string
           description: User's first name (used as primary key)
-        favoriteColor:
+        color:
           type: string
-          description: User's favorite color
+          description: User's color
 
     ColorRecord:
       type: object
       required:
         - pk
-        - favoriteColor
         - colors
         - timestamp
       properties:
         pk:
           type: string
           description: Primary key (firstName)
-        favoriteColor:
-          type: string
-          description: User's favorite color
         colors:
           type: array
           items:
@@ -80,16 +76,6 @@ components:
           properties:
             data:
               $ref: '#/components/schemas/ColorRecord'
-
-    ColorRecordArrayResponse:
-      allOf:
-        - $ref: '#/components/schemas/ApiResponse'
-        - type: object
-          properties:
-            data:
-              type: array
-              items:
-                $ref: '#/components/schemas/ColorRecord'
 
     ErrorResponse:
       allOf:
@@ -127,7 +113,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ColorRecordArrayResponse'
+                $ref: '#/components/schemas/ColorRecordResponse'
         '400':
           $ref: '#/components/responses/Error'
         '500':
@@ -139,7 +125,7 @@ paths:
         type: aws_proxy
 
     post:
-      summary: Submit a new favorite color
+      summary: Submit a new color
       operationId: postColors
       requestBody:
         required: true

@@ -1,6 +1,6 @@
 /**
- * Favorite Color API
- * API for managing favorite colors
+ * Color API
+ * API for managing user\'s colors
  *
  * The version of the OpenAPI document: 1.0.0
  * 
@@ -15,7 +15,6 @@ import { Injectable, Optional } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { Observable, from, of, switchMap } from 'rxjs';
-import { ColorRecordArrayResponse } from '../model/colorRecordArrayResponse';
 import { ColorRecordResponse } from '../model/colorRecordResponse';
 import { ColorSubmission } from '../model/colorSubmission';
 import { ErrorResponse } from '../model/errorResponse';
@@ -54,7 +53,7 @@ export class DefaultService {
      * @param reportProgress flag to report request and response progress.
      * @param {*} [getColorsOpts.config] Override http request option.
      */
-    public getColors(firstName: string, getColorsOpts?: { config?: AxiosRequestConfig }): Observable<AxiosResponse<ColorRecordArrayResponse>>;
+    public getColors(firstName: string, getColorsOpts?: { config?: AxiosRequestConfig }): Observable<AxiosResponse<ColorRecordResponse>>;
     public getColors(firstName: string, getColorsOpts?: { config?: AxiosRequestConfig }): Observable<any> {
         if (firstName === null || firstName === undefined) {
             throw new Error('Required parameter firstName was null or undefined when calling getColors.');
@@ -87,7 +86,7 @@ export class DefaultService {
                     headers['Authorization'] = `Bearer ${accessToken}`;
                 }
 
-                return this.httpClient.get<ColorRecordArrayResponse>(`${this.basePath}/colors`,
+                return this.httpClient.get<ColorRecordResponse>(`${this.basePath}/colors`,
                     {
                         params: queryParameters,
                         withCredentials: this.configuration.withCredentials,
@@ -127,7 +126,6 @@ export class DefaultService {
                 if (accessToken) {
                     headers['Authorization'] = `Bearer ${accessToken}`;
                 }
-
                 return this.httpClient.request<any>({
                     method: 'OPTIONS',
                     url: `${this.basePath}/colors`,
@@ -139,7 +137,7 @@ export class DefaultService {
         );
     }
     /**
-     * Submit a new favorite color
+     * Submit a new color
      * 
      * @param colorSubmission 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
