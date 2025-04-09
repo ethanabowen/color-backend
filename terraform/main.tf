@@ -27,7 +27,7 @@ resource "aws_s3_bucket" "functions_bucket" {
   tags = local.common_tags
 
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
   }
 }
 
