@@ -16,7 +16,9 @@
       "@shared/*": ["src/shared/*"],
       "@functions/*": ["src/functions/*"],
       "@generated/*": ["src/generated/*"]
-    }
+    },
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": ["src/**/*", "scripts/**/*"],
   "exclude": ["node_modules", "tests", "dist"]

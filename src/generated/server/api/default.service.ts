@@ -128,13 +128,13 @@ export class DefaultService {
                     headers['Authorization'] = `Bearer ${accessToken}`;
                 }
 
-                return this.httpClient.options<any>(`${this.basePath}/colors`,
-                    {
-                        withCredentials: this.configuration.withCredentials,
-                        ...optionsColorsOpts?.config,
-                        headers: {...headers, ...optionsColorsOpts?.config?.headers},
-                    }
-                );
+                return this.httpClient.request<any>({
+                    method: 'OPTIONS',
+                    url: `${this.basePath}/colors`,
+                    withCredentials: this.configuration.withCredentials,
+                    ...optionsColorsOpts?.config,
+                    headers: {...headers, ...optionsColorsOpts?.config?.headers}
+                });
             })
         );
     }
