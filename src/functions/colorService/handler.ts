@@ -63,7 +63,7 @@ const saveColor = async (event: APIGatewayProxyEvent): Promise<ColorRecordRespon
       statusCode: 201
     };
   } catch (error) {
-    debug('Error submitting color:', error);
+    debug('Error saving color:', error);
     return {
       message: 'Internal server error',
       statusCode: 500

@@ -55,7 +55,7 @@ export class DynamoDbConnector {
     }
   }
 
-  async updateColors(record: ColorRecord): Promise<ColorRecord> {
+  async saveColor(record: ColorRecord): Promise<ColorRecord> {
     try {
       const result = await this.docClient.send(new UpdateCommand({
         TableName: this.tableName,
@@ -77,16 +77,6 @@ export class DynamoDbConnector {
     }
   }
 
-  async saveColorSubmission(record: ColorRecord): Promise<ColorRecord> {
-    await this.docClient.send(new PutCommand({
-      TableName: this.tableName,
-      Item: record,
-    }));
-    
-    DEBUG('Color submission saved successfully');
-    return record;
-  }
-
   async searchColors(pk: string): Promise<ColorRecord> {
     const result = await this.docClient.send(new GetCommand({
       TableName: this.tableName,
@@ -94,10 +84,6 @@ export class DynamoDbConnector {
     }));
 
     DEBUG('Search results: %O', result);
-
-    if (!result.Item) {
-      throw new Error(`No record found for pk: ${pk}`);
-    }
 
     return result.Item as ColorRecord;
   }

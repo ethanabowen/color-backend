@@ -81,7 +81,7 @@ describe('DynamoDB Utils', () => {
       expect(result).toEqual(mockRecord);
       expect(sendSpy).toHaveBeenCalledWith(expect.objectContaining({
         input: {
-          TableName: 'Colors',
+          TableName: process.env.TABLE_NAME,
           Key: { pk: 'John' },
         }
       }));
@@ -121,7 +121,7 @@ describe('DynamoDB Utils', () => {
       // Assert
       expect(sendSpy).toHaveBeenCalledWith(expect.objectContaining({
         input: {
-          TableName: 'Colors',
+          TableName: process.env.TABLE_NAME,
           Item: mockRecord,
         }
       }));
@@ -146,13 +146,13 @@ describe('DynamoDB Utils', () => {
       sendSpy.mockResolvedValue(response);
 
       // Act
-      const result = await dynamodb.updateColors(mockRecord);
+      const result = await dynamodb.saveColor(mockRecord);
 
       // Assert
       expect(result).toEqual({ "colors": ['blue', 'red'] });
       expect(sendSpy).toHaveBeenCalledWith(expect.objectContaining({
         input: {
-          TableName: 'Colors',
+          TableName: process.env.TABLE_NAME,
           Key: { pk: 'John' },
           UpdateExpression: 'SET colors = list_append(if_not_exists(colors, :empty_list), :new_color)',
           ExpressionAttributeValues: {
@@ -170,25 +170,33 @@ describe('DynamoDB Utils', () => {
       sendSpy.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(dynamodb.updateColors(mockRecord)).rejects.toThrow('DynamoDB error');
+      await expect(dynamodb.saveColor(mockRecord)).rejects.toThrow('DynamoDB error');
     });
   });
 
-  describe('saveColorSubmission', () => {
-    it('should successfully save a color submission', async () => {
+  describe('saveColor', () => {
+    it('should successfully add a color', async () => {
       // Arrange
-      const response: DynamoDBResponse = {};
+      const response: DynamoDBResponse = {
+        Attributes: { colors: ['blue'] }
+      };
       sendSpy.mockResolvedValue(response);
 
       // Act
-      const result = await dynamodb.saveColorSubmission(mockRecord);
+      const result = await dynamodb.saveColor(mockRecord);
 
       // Assert
-      expect(result).toEqual(mockRecord);
+      expect(result).toEqual({ colors: ['blue'] });
       expect(sendSpy).toHaveBeenCalledWith(expect.objectContaining({
         input: {
-          TableName: 'Colors',
-          Item: mockRecord,
+          TableName: process.env.TABLE_NAME,
+          Key: { pk: 'John' },
+          UpdateExpression: 'SET colors = list_append(if_not_exists(colors, :empty_list), :new_color)',
+          ExpressionAttributeValues: {
+            ':empty_list': [],
+            ':new_color': ['blue'],
+          },
+          ReturnValues: 'ALL_NEW',
         }
       }));
     });
@@ -199,7 +207,7 @@ describe('DynamoDB Utils', () => {
       sendSpy.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(dynamodb.saveColorSubmission(mockRecord)).rejects.toThrow('DynamoDB error');
+      await expect(dynamodb.saveColor(mockRecord)).rejects.toThrow('DynamoDB error');
     });
   });
 
@@ -218,7 +226,7 @@ describe('DynamoDB Utils', () => {
       expect(result).toEqual(response.Item);
       expect(sendSpy).toHaveBeenCalledWith(expect.objectContaining({
         input: {
-          TableName: 'Colors',
+          TableName: process.env.TABLE_NAME,
           Key: { pk: 'John' }
         }
       }));

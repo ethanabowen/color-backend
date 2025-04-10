@@ -17,8 +17,8 @@ export class ColorService {
       timestamp: new Date().toISOString()
     };
     
-    DEBUG('Created DynamoDB record: %O', dynamoRecord);
-    const record = await this.dynamodbConnector.saveColorSubmission(dynamoRecord);
+    DEBUG('Saving DynamoDB record: %O', dynamoRecord);
+    const record = await this.dynamodbConnector.saveColor(dynamoRecord);
     DEBUG('Saved record successfully');
     
     return {
@@ -29,7 +29,7 @@ export class ColorService {
 
   async searchColors(firstName: string): Promise<{ data: ColorRecord; statusCode: number }> {
     const result = await this.dynamodbConnector.searchColors(firstName);
-    DEBUG('Found result: %O', result);
+    DEBUG('Found dynamo record: %O', result);
     
     return {
       data: result,

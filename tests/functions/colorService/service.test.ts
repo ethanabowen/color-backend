@@ -15,7 +15,7 @@ describe('ColorService', () => {
     jest.clearAllMocks();
 
     dynamodb = new DynamoDbConnector();
-    saveColorSubmissionSpy = jest.spyOn(dynamodb, 'saveColorSubmission');
+    saveColorSubmissionSpy = jest.spyOn(dynamodb, 'saveColor');
     searchColorsSpy = jest.spyOn(dynamodb, 'searchColors');
 
     service = new ColorService(dynamodb);
