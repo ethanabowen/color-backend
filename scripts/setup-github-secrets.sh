@@ -14,12 +14,12 @@ if ! which gh > /dev/null 2>&1; then
     exit 1
 fi
 
-# Check if user is logged in to GitHub
-if ! gh auth status &> /dev/null; then
-    echo "Please login to GitHub first:"
-    echo "gh auth login"
-    exit 1
-fi
+# # Check if user is logged in to GitHub
+# if ! gh auth status &> /dev/null; then
+#     echo "Please login to GitHub first:"
+#     echo "gh auth login"
+#     exit 1
+# fi
 
 # Get AWS credentials from Terraform output
 echo "Getting AWS credentials from Terraform output..."
@@ -53,7 +53,7 @@ cd ..
 echo "Setting GitHub Secrets..."
 gh secret set AWS_ACCESS_KEY_ID -b "$AWS_ACCESS_KEY_ID"
 gh secret set AWS_SECRET_ACCESS_KEY -b "$AWS_SECRET_ACCESS_KEY"
-gh secret set WEBSITE_BUCKET_NAME -b "$WEBSITE_BUCKET_NAME
+gh secret set WEBSITE_BUCKET_NAME -b "$WEBSITE_BUCKET_NAME"
 
 # Verify secrets were set
 echo "Verifying secrets..."
