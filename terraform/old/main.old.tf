@@ -60,22 +60,15 @@ resource "aws_s3_bucket_public_access_block" "functions_bucket_public_access" {
   restrict_public_buckets = true
 }
 
-# DynamoDB table
+## DynamoDB Table
 resource "aws_dynamodb_table" "app_table" {
-  name           = "${var.project_name}-${var.environment}-table"
-  billing_mode   = var.dynamodb_billing_mode
-  read_capacity  = var.dynamodb_billing_mode == "PROVISIONED" ? var.dynamodb_read_capacity : null
-  write_capacity = var.dynamodb_billing_mode == "PROVISIONED" ? var.dynamodb_write_capacity : null
-  hash_key       = "pk"
+  name         = "${var.project_name}-${var.environment}-table"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "pk"
 
   attribute {
     name = "pk"
     type = "S"
-  }
-
-  tags = {
-    Environment = var.environment
-    Project     = var.project_name
   }
 
   point_in_time_recovery {
@@ -84,5 +77,10 @@ resource "aws_dynamodb_table" "app_table" {
 
   server_side_encryption {
     enabled = true
+  }
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
   }
 }

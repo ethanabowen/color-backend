@@ -1,16 +1,14 @@
 # Data source for the OpenAPI spec
-data "template_file" "api_spec" {
-  template = file("${path.module}/../openapi.yaml")
-
-  vars = {
+locals {
+  api_spec = templatefile("${path.module}/../openapi.yaml", {
     lambda_invoke_arn = aws_lambda_function.color_service.invoke_arn
-  }
+  })
 }
 
 # REST API Gateway with OpenAPI spec
 resource "aws_api_gateway_rest_api" "api" {
   name = "${var.project_name}-${var.environment}-api"
-  body = data.template_file.api_spec.rendered
+  body = local.api_spec
 
   endpoint_configuration {
     types = ["REGIONAL"]

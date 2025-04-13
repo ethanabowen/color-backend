@@ -1,7 +1,23 @@
 variable "project_name" {
   description = "Name of the project"
   type        = string
-  default     = "color-service"
+  default     = "color"
+}
+
+variable "environment" {
+  description = "Environment (dev, staging, prod)"
+  type        = string
+  default     = "dev"
+  validation {
+    condition     = contains(["dev", "test", "prod"], var.environment)
+    error_message = "Environment must be one of: dev, test, prod"
+  }
+}
+
+variable "aws_region" {
+  description = "The AWS region where resources will be created"
+  type        = string
+  default     = "us-east-1"
 }
 
 # VPC CIDR block with validation
@@ -23,5 +39,23 @@ variable "private_subnet_cidrs" {
 variable "availability_zones" {
   description = "Availability zones for subnets"
   type        = list(string)
-  default     = ["us-east-1a", "us-east-1b"]
+  default     = ["a", "b"]  # Just the suffix, we'll combine with region
+}
+
+variable "tags" {
+  description = "Tags to apply to all resources"
+  type        = map(string)
+  default = {
+    Terraform   = "true"
+    Environment = "dev"
+    Project     = "Color"
+  }
+}
+
+# Add data source for AWS account ID if not already present
+data "aws_caller_identity" "current" {}
+
+# Add data source for available AZs
+data "aws_availability_zones" "available" {
+  state = "available"
 } 

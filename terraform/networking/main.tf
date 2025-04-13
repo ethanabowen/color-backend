@@ -1,17 +1,19 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
+locals {
+  name_prefix = "${var.project_name}-${var.environment}"
+  common_tags = merge(
+    var.tags,
+    {
+      Environment = var.environment
+      Project     = var.project_name
+      ManagedBy   = "terraform"
     }
-  }
+  )
+  # Access keys will expire after 90 days
+  access_key_expiration = timeadd(timestamp(), "2160h") # 90 days
+  s3_origin_id = "${local.name_prefix}-website-origin"
 }
 
-# AWS Provider Configuration
-# Defines the AWS region where resources will be created
-provider "aws" {
-  region = "us-east-1"
-}
+data "aws_region" "current" {}
 
 # VPC with DNS support for private DNS resolution
 resource "aws_vpc" "main" {
@@ -32,9 +34,12 @@ resource "aws_subnet" "private" {
   cidr_block        = var.private_subnet_cidrs[count.index]
   availability_zone = var.availability_zones[count.index]
 
-  tags = {
-    Name = "${var.project_name}-private-subnet-${count.index + 1}"
-  }
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${var.project_name}-private-subnet-${count.index + 1}"
+    }
+  )
 }
 
 # Explicit route tables for better control and auditability
@@ -96,28 +101,3 @@ resource "aws_security_group" "vpc_endpoint" {
     Name = "${var.project_name}-vpc-endpoint-sg"
   }
 }
-
-# Gateway endpoints for private access to AWS services
-resource "aws_vpc_endpoint" "dynamodb" {
-  vpc_id       = aws_vpc.main.id
-  service_name = "com.amazonaws.us-east-1.dynamodb"
-  vpc_endpoint_type = "Gateway"
-
-  route_table_ids = aws_route_table.private[*].id
-
-  tags = {
-    Name = "${var.project_name}-dynamodb-endpoint"
-  }
-}
-
-resource "aws_vpc_endpoint" "s3" {
-  vpc_id       = aws_vpc.main.id
-  service_name = "com.amazonaws.us-east-1.s3"
-  vpc_endpoint_type = "Gateway"
-
-  route_table_ids = aws_route_table.private[*].id
-
-  tags = {
-    Name = "${var.project_name}-s3-endpoint"
-  }
-} 
