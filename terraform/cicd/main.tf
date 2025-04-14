@@ -11,6 +11,16 @@ data "terraform_remote_state" "application" {
   }
 }
 
+# Reference application stack outputs
+data "terraform_remote_state" "networking" {
+  backend = "s3"
+  config = {
+    bucket = var.terraform_state_bucket
+    key    = "color-service/networking/terraform.tfstate"
+    region = var.aws_region
+  }
+}
+
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
   common_tags = merge(

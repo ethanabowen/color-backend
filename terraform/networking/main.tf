@@ -21,9 +21,12 @@ resource "aws_vpc" "main" {
   enable_dns_hostnames = true # required for VPC endpoints
   enable_dns_support   = true
 
-  tags = {
-    Name = "${var.project_name}-vpc"
-  }
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${var.project_name}-vpc"
+    }
+  )
 }
 
 # Private subnets in multi-AZ for high availability
@@ -48,9 +51,12 @@ resource "aws_route_table" "private" {
   count  = length(var.private_subnet_cidrs)
   vpc_id = aws_vpc.main.id
 
-  tags = {
-    Name = "${var.project_name}-private-rt-${count.index + 1}"
-  }
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${var.project_name}-private-rt-${count.index + 1}"
+    }
+  )
 }
 
 # Route Table Associations
@@ -77,9 +83,12 @@ resource "aws_security_group" "lambda" {
     description = "Allow all outbound traffic from Lambda functions"
   }
 
-  tags = {
-    Name = "${var.project_name}-lambda-sg"
-  }
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${var.project_name}-lambda-sg"
+    }
+  )
 }
 
 # VPC Endpoint SG: HTTPS only from Lambda
@@ -97,7 +106,10 @@ resource "aws_security_group" "vpc_endpoint" {
     description     = "Allow HTTPS access from Lambda functions"
   }
 
-  tags = {
-    Name = "${var.project_name}-vpc-endpoint-sg"
-  }
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${var.project_name}-vpc-endpoint-sg"
+    }
+  )
 }

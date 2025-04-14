@@ -6,9 +6,12 @@ resource "aws_vpc_endpoint" "dynamodb" {
 
   route_table_ids = aws_route_table.private[*].id
 
-  tags = {
-    Name = "${var.project_name}-dynamodb-endpoint"
-  }
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${var.project_name}-dynamodb-endpoint"
+    }
+  )
 }
 
 resource "aws_vpc_endpoint" "s3" {
@@ -18,7 +21,10 @@ resource "aws_vpc_endpoint" "s3" {
 
   route_table_ids = aws_route_table.private[*].id
 
-  tags = {
-    Name = "${var.project_name}-s3-endpoint"
-  }
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${var.project_name}-s3-endpoint"
+    }
+  )
 } 

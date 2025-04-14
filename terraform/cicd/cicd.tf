@@ -45,7 +45,10 @@ resource "aws_iam_policy" "github_actions" {
           "s3:DeleteObject",
           "s3:Get*",
           "s3:List*",
-          "s3:PutObject"
+          "s3:PutObject",
+
+          # EC2 - Network
+          "ec2:*"
         ]
         Resource = [
           # Api Gateway
@@ -79,11 +82,66 @@ resource "aws_iam_policy" "github_actions" {
           "arn:aws:s3:::color-service-terraform-state",
           "arn:aws:s3:::color-service-terraform-state/*",
           # Terraform state locking table
-          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/color-service-terraform-state",
+          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/color-service-terraform-locks",
           # Website bucket
           "arn:aws:s3:::${data.terraform_remote_state.application.outputs.website_bucket_name}",
-          "arn:aws:s3:::${data.terraform_remote_state.application.outputs.website_bucket_name}/*"
+          "arn:aws:s3:::${data.terraform_remote_state.application.outputs.website_bucket_name}/*",
+          # EC2
+          # "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*",
+          # VPC
+          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:vpc/${data.terraform_remote_state.networking.outputs.vpc_id}",
+          # Subnets
+          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:subnet/${data.terraform_remote_state.networking.outputs.private_subnet_ids[0]}",
+          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:subnet/${data.terraform_remote_state.networking.outputs.private_subnet_ids[1]}",
+          # Security Groups
+          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:security-group/${data.terraform_remote_state.networking.outputs.lambda_security_group_id}",
+          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:security-group/${data.terraform_remote_state.networking.outputs.vpc_endpoint_security_group_id}",
+          # Route Tables
+          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:route-table/${data.terraform_remote_state.networking.outputs.private_route_table_ids[0]}",
+          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:route-table/${data.terraform_remote_state.networking.outputs.private_route_table_ids[1]}",
+          # VPC Endpoints
+          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:vpc-endpoint/${data.terraform_remote_state.networking.outputs.dynamodb_endpoint_id}",
+          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:vpc-endpoint/${data.terraform_remote_state.networking.outputs.s3_endpoint_id}",
+          # Availability Zones
+          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:availability-zone/${data.aws_region.current.name}a",
+          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:availability-zone/${data.aws_region.current.name}b",
+          # Tags
+          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:tag/${data.terraform_remote_state.networking.outputs.vpc_id}"
         ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          # EC2 Actions (Alphabetized)
+          "ec2:AssociateRouteTable",
+          "ec2:AuthorizeSecurityGroupEgress",
+          "ec2:AuthorizeSecurityGroupIngress",
+          "ec2:CreateRouteTable",
+          "ec2:CreateSecurityGroup",
+          "ec2:CreateSubnet",
+          "ec2:CreateTags",
+          "ec2:CreateVpc",
+          "ec2:CreateVpcEndpoint",
+          "ec2:DeleteRouteTable",
+          "ec2:DeleteSecurityGroup",
+          "ec2:DeleteSubnet",
+          "ec2:DeleteVpc",
+          "ec2:DeleteVpcEndpoints",
+          "ec2:Describe*", # Read only actions
+          "ec2:DisassociateRouteTable",
+          "ec2:ModifySubnetAttribute",
+          "ec2:ModifyVpcAttribute",
+          "ec2:ModifyVpcEndpoint",
+          "ec2:RevokeSecurityGroupEgress",
+          "ec2:RevokeSecurityGroupIngress"
+        ]
+        Resource = ["*"] # Required for EC2 actions
+        # Wasn't working - TODO: Fix
+        # Condition = {
+        #   StringEquals = {
+        #     "aws:RequestTag/ManagedBy" = "terraform"
+        #   }
+        # }
       }
     ]
   })
