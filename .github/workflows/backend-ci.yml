@@ -93,8 +93,7 @@ jobs:
                         -backend-config="region=${{ env.AWS_REGION }}"
           terraform apply -auto-approve \
             -var="environment=${{ env.ENVIRONMENT }}" \
-            -var="project_name=color" \
-            -var="aws_region=${{ env.AWS_REGION }}"
+            -var="project_name=color"
 
       - name: Deploy Networking Infrastructure
         run: |
