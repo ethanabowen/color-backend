@@ -13,6 +13,7 @@ on:
 env:
   AWS_REGION: us-east-1
   ENVIRONMENT: dev
+  TERRAFORM_STATE_BUCKET: color-service-terraform-state
 
 jobs:
   test:
@@ -84,11 +85,48 @@ jobs:
             echo "AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID_PROD }}" >> $GITHUB_ENV
           fi
 
-      - name: Deploy infrastructure
+      - name: Deploy Bootstrap Infrastructure
         run: |
-          cd terraform
-          terraform init
+          cd terraform/bootstrap
+          terraform init -backend-config="bucket=${{ env.TERRAFORM_STATE_BUCKET }}" \
+                        -backend-config="key=color-service/bootstrap/terraform.tfstate" \
+                        -backend-config="region=${{ env.AWS_REGION }}"
+          terraform apply -auto-approve \
+            -var="environment=${{ env.ENVIRONMENT }}" \
+            -var="project_name=color" \
+            -var="aws_region=${{ env.AWS_REGION }}"
+
+      - name: Deploy Networking Infrastructure
+        run: |
+          cd terraform/networking
+          terraform init -backend-config="bucket=${{ env.TERRAFORM_STATE_BUCKET }}" \
+                        -backend-config="key=color-service/networking/terraform.tfstate" \
+                        -backend-config="region=${{ env.AWS_REGION }}"
+          terraform apply -auto-approve \
+            -var="environment=${{ env.ENVIRONMENT }}" \
+            -var="project_name=color" \
+            -var="aws_region=${{ env.AWS_REGION }}"
+
+      - name: Deploy Application Infrastructure
+        run: |
+          cd terraform/application
+          terraform init -backend-config="bucket=${{ env.TERRAFORM_STATE_BUCKET }}" \
+                        -backend-config="key=color-service/application/terraform.tfstate" \
+                        -backend-config="region=${{ env.AWS_REGION }}"
+          terraform apply -auto-approve \
+            -var="environment=${{ env.ENVIRONMENT }}" \
+            -var="project_name=color" \
+            -var="aws_region=${{ env.AWS_REGION }}"
+
+      - name: Deploy CICD Infrastructure
+        run: |
+          cd terraform/cicd
+          terraform init -backend-config="bucket=${{ env.TERRAFORM_STATE_BUCKET }}" \
+                        -backend-config="key=color-service/cicd/terraform.tfstate" \
+                        -backend-config="region=${{ env.AWS_REGION }}"
           terraform apply -auto-approve \
             -var="environment=${{ env.ENVIRONMENT }}" \
             -var="project_name=color" \
             -var="aws_account_id=${{ env.AWS_ACCOUNT_ID }}" 
+            -var="aws_region=${{ env.AWS_REGION }}" \
+            -var="terraform_state_bucket=${{ env.TERRAFORM_STATE_BUCKET }}" 
