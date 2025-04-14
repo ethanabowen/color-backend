@@ -1,7 +1,7 @@
 # Lambda Function
 resource "aws_lambda_function" "color_service" {
   filename         = data.archive_file.color_service_zip.output_path
-  function_name    = "${var.project_name}-color-service-${var.environment}"
+  function_name    = "${var.project_name}-${var.service_name}-${var.environment}"
   role            = aws_iam_role.lambda_role.arn
   handler         = "functions/colorService/handler.handler"
   runtime         = "nodejs20.x"
@@ -32,7 +32,7 @@ resource "aws_lambda_function" "color_service" {
 
 # Lambda IAM Role
 resource "aws_iam_role" "lambda_role" {
-  name = "${var.project_name}-${var.environment}-lambda-role"
+  name = "${var.project_name}-${var.service_name}-${var.environment}-lambda-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -52,7 +52,7 @@ resource "aws_iam_role" "lambda_role" {
 
 # Lambda IAM Policy
 resource "aws_iam_role_policy" "lambda_policy" {
-  name = "${var.project_name}-${var.environment}-lambda-policy"
+  name = "${var.project_name}-${var.service_name}-${var.environment}-lambda-policy"
   role = aws_iam_role.lambda_role.id
 
   policy = jsonencode({
@@ -88,7 +88,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
         ]
         Resource = [
           # Building log group name to prevent circular dependency
-          "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.project_name}-color-service-${var.environment}:*"
+          "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.project_name}-${var.service_name}-${var.environment}:*"
         ]
       },
       {
@@ -110,6 +110,6 @@ resource "aws_iam_role_policy" "lambda_policy" {
 data "archive_file" "color_service_zip" {
   type        = "zip"
   source_dir  = "${path.module}/../../dist"
-  output_path = "${path.module}/../../dist/color-service.zip"
-  excludes    = ["color-service.zip"]
+  output_path = "${path.module}/../../dist/${var.service_name}.zip"
+  excludes    = ["${var.service_name}.zip"]
 }

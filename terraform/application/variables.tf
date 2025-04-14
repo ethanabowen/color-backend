@@ -4,6 +4,12 @@ variable "project_name" {
   default     = "color"
 }
 
+variable "service_name" {
+  description = "Name of the service"
+  type        = string
+  default     = "color-service"
+}
+
 variable "environment" {
   description = "Environment (dev, staging, prod)"
   type        = string
