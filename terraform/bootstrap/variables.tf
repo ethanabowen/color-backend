@@ -20,6 +20,6 @@ variable "tags" {
   default = {
     Terraform   = "true"
     Environment = "dev"
-    Project     = "Color"
+    Project     = "color"
   }
 }

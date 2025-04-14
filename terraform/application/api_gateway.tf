@@ -72,7 +72,7 @@ resource "aws_iam_role" "api_gateway_cloudwatch" {
 }
 
 resource "aws_iam_role_policy" "api_gateway_cloudwatch" {
-  name = "${var.project_name}-${var.environment}-api-gateway-cloudwatch"
+  name = "${var.project_name}-${var.service_name}-${var.environment}-api-gateway-cloudwatch"
   role = aws_iam_role.api_gateway_cloudwatch.id
 
   policy = jsonencode({

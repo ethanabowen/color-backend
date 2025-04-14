@@ -47,8 +47,8 @@ variable "tags" {
   type        = map(string)
   default = {
     Terraform   = "true"
-    Environment = var.environment
-    Project     = "Color"
+    Environment = "dev"
+    Project     = "color"
   }
 }
 
