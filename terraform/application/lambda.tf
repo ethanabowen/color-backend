@@ -24,6 +24,10 @@ resource "aws_lambda_function" "color_service" {
   }
 
   tags = local.common_tags
+
+  depends_on = [
+    aws_iam_role_policy.lambda_policy
+  ]
 }
 
 # Lambda IAM Role
@@ -83,7 +87,8 @@ resource "aws_iam_role_policy" "lambda_policy" {
           "logs:PutLogEvents"
         ]
         Resource = [
-          "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${aws_lambda_function.color_service.function_name}:*"
+          # Building log group name to prevent circular dependency
+          "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.project_name}-color-service-${var.environment}:*"
         ]
       },
       {

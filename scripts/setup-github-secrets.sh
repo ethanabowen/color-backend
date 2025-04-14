@@ -14,16 +14,16 @@ if ! which gh > /dev/null 2>&1; then
     exit 1
 fi
 
-# # Check if user is logged in to GitHub
-# if ! gh auth status &> /dev/null; then
-#     echo "Please login to GitHub first:"
-#     echo "gh auth login"
-#     exit 1
-# fi
+# Check if user is logged in to GitHub
+if ! gh auth status &> /dev/null; then
+    echo "Please login to GitHub first:"
+    echo "gh auth login"
+    exit 1
+fi
 
-# Get AWS credentials from Terraform output
-echo "Getting AWS credentials from Terraform output..."
-cd ../terraform || exit 1
+# Get AWS credentials from CICD Terraform output
+echo "Getting AWS credentials from CICD Terraform output..."
+cd ../terraform/cicd || exit 1
 
 # Get and verify each output
 echo "Getting AWS_ACCESS_KEY_ID..."
@@ -39,6 +39,9 @@ if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
     echo "Error: Failed to get AWS_SECRET_ACCESS_KEY from terraform output"
     exit 1
 fi
+
+echo "Getting Website Bucket Name from Application Terraform output..."
+cd ../application || exit 1
 
 echo "Getting WEBSITE_BUCKET_NAME..."
 WEBSITE_BUCKET_NAME=$(AWS_PROFILE=$1 terraform output -raw website_bucket_name)

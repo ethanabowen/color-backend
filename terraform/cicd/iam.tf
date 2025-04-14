@@ -14,8 +14,8 @@ resource "aws_iam_policy" "frontend_deployment" {
           "s3:DeleteObject"
         ]
         Resource = [
-          aws_s3_bucket.website.arn,
-          "${aws_s3_bucket.website.arn}/*"
+          "arn:aws:s3:::${data.terraform_remote_state.application.outputs.website_bucket_name}",
+          "arn:aws:s3:::${data.terraform_remote_state.application.outputs.website_bucket_name}/*"
         ]
       },
       {
@@ -24,7 +24,7 @@ resource "aws_iam_policy" "frontend_deployment" {
           "cloudfront:CreateInvalidation"
         ]
         Resource = [
-          aws_cloudfront_distribution.website.arn
+          "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${data.terraform_remote_state.application.outputs.cloudfront_distribution_id}"
         ]
       }
     ]

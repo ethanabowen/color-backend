@@ -28,6 +28,11 @@ output "api_gateway_arn" {
   value       = aws_api_gateway_rest_api.api.arn
 }
 
+output "api_gateway_id" {
+  description = "ID of the API Gateway"
+  value       = aws_api_gateway_rest_api.api.id
+}
+
 output "color_service_function_name" {
   description = "Name of the color service Lambda function"
   value       = aws_lambda_function.color_service.function_name
@@ -43,11 +48,6 @@ output "website_url" {
   value       = "https://${aws_cloudfront_distribution.website.domain_name}"
 }
 
-output "cloudfront_distribution_id" {
-  description = "ID of the CloudFront distribution"
-  value       = aws_cloudfront_distribution.website.id
-}
-
 output "website_bucket" {
   description = "Name of the S3 bucket hosting the website"
   value       = aws_s3_bucket.website.bucket
@@ -56,4 +56,35 @@ output "website_bucket" {
 output "website_bucket_name" {
   value       = aws_s3_bucket.website.id
   description = "Name of the S3 bucket hosting the frontend website"
+}
+
+
+output "cloudfront_distribution_id" {
+  description = "ID of the CloudFront distribution"
+  value       = aws_cloudfront_distribution.website.id
+}
+
+output "cloudfront_cache_policy_id" {
+  description = "ID of the CloudFront cache policy"
+  value       = aws_cloudfront_cache_policy.website.id
+}
+
+output "cloudfront_origin_access_control_id" {
+  description = "ID of the CloudFront origin access control"
+  value       = aws_cloudfront_origin_access_control.website.id
+}
+
+output "cloudfront_response_headers_policy_id" {
+  description = "ID of the CloudFront response headers policy"
+  value       = aws_cloudfront_response_headers_policy.website.id
+}
+
+output "lambda_role_arn" {
+  description = "ARN of the Lambda role"
+  value       = aws_iam_role.lambda_role.arn
+} 
+
+output "api_gateway_cloudwatch_role_arn" {
+  description = "ARN of the API Gateway CloudWatch role"
+  value       = aws_iam_role.api_gateway_cloudwatch.arn
 }

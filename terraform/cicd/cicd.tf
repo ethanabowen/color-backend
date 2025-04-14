@@ -7,7 +7,7 @@ resource "aws_iam_user" "github_actions" {
   }
 }
 
-# IAM policy for GitHub Actions
+# IAM policy for GitHub Actions - Consider applying principal of least privilege
 resource "aws_iam_policy" "github_actions" {
   name = "github-actions-policy"
 
@@ -18,127 +18,71 @@ resource "aws_iam_policy" "github_actions" {
         Effect = "Allow"
         Action = [
           # AWS Gateway
-          "apigateway:DELETE",
-          "apigateway:GET",
-          "apigateway:PATCH",
-          "apigateway:POST",
-          "apigateway:PUT",
+          "apigateway:*",
           
           # CloudFront
-          "cloudfront:GetCachePolicy",
-          "cloudfront:GetDistribution",
-          "cloudfront:GetOriginAccessControl",
-          "cloudfront:GetResponseHeadersPolicy",
-          "cloudfront:ListTagsForResource",
+          "cloudfront:Get*",
+          "cloudfront:List*",
           
           # DynamoDB - Terraform state locks + App Tables
-          "dynamodb:BatchGetItem",
-          "dynamodb:BatchWriteItem",
-          "dynamodb:CreateTable", 
-          "dynamodb:DeleteItem",
-          "dynamodb:DeleteTable",
-          "dynamodb:DescribeContinuousBackups",
-          "dynamodb:DescribeTable",
-          "dynamodb:DescribeTableReplicaAutoScaling",
-          "dynamodb:DescribeTimeToLive",
-          "dynamodb:GetItem",
-          "dynamodb:ListTagsOfResource",
-          "dynamodb:ListTables",
-          "dynamodb:PutItem",
-          "dynamodb:Query",
-          "dynamodb:Scan",
-				  "dynamodb:TagResource",
-				  "dynamodb:UpdateContinuousBackups",
-          "dynamodb:UpdateItem",
-          "dynamodb:UpdateTable",
+          "dynamodb:*",
           
           # IAM
           "iam:CreatePolicy",
           "iam:CreatePolicyVersion",
           "iam:DeletePolicyVersion",
-          "iam:GetPolicy",
-          "iam:GetPolicyVersion",
-          "iam:GetRole",
-          "iam:GetRolePolicy",
-          "iam:GetUser",
-          "iam:GetUserPolicy",
-          "iam:ListAccessKeys",
-          "iam:ListAttachedRolePolicies",
-          "iam:ListAttachedUserPolicies",
-          "iam:ListPolicyVersions",
-          "iam:ListRolePolicies",
-          "iam:ListRoles",
-          "iam:ListUsers",
+          "iam:Get*",
+          "iam:List*",
           "iam:PassRole",
           
           # Lambda functions
-          "lambda:GetFunction",
-          "lambda:GetFunctionCodeSigningConfig",
-          "lambda:GetFunctionConfiguration",
-          "lambda:GetPolicy",
-          "lambda:ListFunctions",
-          "lambda:ListVersionsByFunction",
+          "lambda:Get*",
+          "lambda:List*",
           "lambda:PublishVersion",
-          "lambda:UpdateFunctionCode",
-          "lambda:UpdateFunctionConfiguration",
+          "lambda:UpdateFunction*",
           
           # S3 - Terraform state bucket + App buckets
           "s3:DeleteObject",
-          "s3:GetAccelerateConfiguration",
-          "s3:GetBucketAcl",
-          "s3:GetBucketCORS",
-          "s3:GetBucketLocation",
-          "s3:GetBucketLogging",
-          "s3:GetBucketObjectLockConfiguration",
-          "s3:GetBucketPolicy",
-          "s3:GetBucketPublicAccessBlock",
-          "s3:GetBucketRequestPayment",
-          "s3:GetBucketTagging",
-          "s3:GetBucketVersioning",
-          "s3:GetBucketWebsite",
-          "s3:GetEncryptionConfiguration",
-          "s3:GetLifecycleConfiguration",
-          "s3:GetObject",
-          "s3:GetReplicationConfiguration",
-          "s3:ListBucket",
+          "s3:Get*",
+          "s3:List*",
           "s3:PutObject"
         ]
         Resource = [
           # Api Gateway
-          aws_api_gateway_rest_api.api.arn,
-          "${aws_api_gateway_rest_api.api.arn}/*",
-          "${aws_api_gateway_rest_api.api.execution_arn}/*",
-          "arn:aws:apigateway:${var.aws_region}::/account",
+          data.terraform_remote_state.application.outputs.api_gateway_arn,
+          "${data.terraform_remote_state.application.outputs.api_gateway_arn}/*",
+          "arn:aws:execute-api:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${data.terraform_remote_state.application.outputs.api_gateway_id}/*",
+          "arn:aws:apigateway:${data.aws_region.current.name}::/account",
           # CloudFront
-          aws_cloudfront_cache_policy.website.arn,
-          aws_cloudfront_distribution.website.arn,
-          aws_cloudfront_origin_access_control.website.arn,
-          aws_cloudfront_response_headers_policy.website.arn,
+          "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${data.terraform_remote_state.application.outputs.cloudfront_distribution_id}",
+          "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:cache-policy/${data.terraform_remote_state.application.outputs.cloudfront_cache_policy_id}",
+          "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:origin-access-control/${data.terraform_remote_state.application.outputs.cloudfront_origin_access_control_id}",
+          "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:response-headers-policy/${data.terraform_remote_state.application.outputs.cloudfront_response_headers_policy_id}",
           # DynamoDB table
-          aws_dynamodb_table.app_table.arn,
-          "${aws_dynamodb_table.app_table.arn}/index/*",
+          data.terraform_remote_state.application.outputs.dynamodb_table_arn,
+          "${data.terraform_remote_state.application.outputs.dynamodb_table_arn}/index/*",
           # Frontend
           aws_iam_policy.frontend_deployment.arn,
           aws_iam_user.frontend_ci.arn,
           # IAM resources
-          aws_iam_role.api_gateway_cloudwatch.arn,
-          aws_iam_role.lambda_role.arn,
+          data.terraform_remote_state.application.outputs.api_gateway_cloudwatch_role_arn,
+          data.terraform_remote_state.application.outputs.lambda_role_arn,
           aws_iam_user.github_actions.arn,
-          "arn:aws:iam::${var.aws_account_id}:policy/github-actions-policy",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/github-actions-policy",
           # Lambda functions + role
-          aws_lambda_function.color_service.arn,
-          "${aws_lambda_function.color_service.arn}:*",
+          data.terraform_remote_state.application.outputs.color_service_function_arn,
+          "${data.terraform_remote_state.application.outputs.color_service_function_arn}:*",
           # Lambda functions bucket
-          aws_s3_bucket.functions_bucket.arn,
-          "${aws_s3_bucket.functions_bucket.arn}/*",
+          data.terraform_remote_state.application.outputs.functions_bucket_arn,
+          "${data.terraform_remote_state.application.outputs.functions_bucket_arn}/*",
           # Terraform state bucket
-          "arn:aws:s3:::awsplayground-terraform-state",
-          "arn:aws:s3:::awsplayground-terraform-state/*",
+          "arn:aws:s3:::color-service-terraform-state",
+          "arn:aws:s3:::color-service-terraform-state/*",
           # Terraform state locking table
-          "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/awsplayground-terraform-locks",
+          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/color-service-terraform-state",
           # Website bucket
-          aws_s3_bucket.website.arn,
-          "${aws_s3_bucket.website.arn}/*"
+          "arn:aws:s3:::${data.terraform_remote_state.application.outputs.website_bucket_name}",
+          "arn:aws:s3:::${data.terraform_remote_state.application.outputs.website_bucket_name}/*"
         ]
       }
     ]
