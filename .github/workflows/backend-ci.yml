@@ -126,6 +126,6 @@ jobs:
           terraform apply -auto-approve \
             -var="environment=${{ env.ENVIRONMENT }}" \
             -var="project_name=color" \
-            -var="aws_account_id=${{ env.AWS_ACCOUNT_ID }}" 
+            -var="aws_account_id=${{ env.AWS_ACCOUNT_ID }}" \
             -var="aws_region=${{ env.AWS_REGION }}" \
             -var="terraform_state_bucket=${{ env.TERRAFORM_STATE_BUCKET }}" 

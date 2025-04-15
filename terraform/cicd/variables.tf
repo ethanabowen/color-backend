@@ -44,4 +44,8 @@ variable "terraform_state_bucket" {
 variable "aws_account_id" {
   description = "AWS account ID"
   type        = string
+  validation {
+    condition     = can(regex("^\\d{12}$", var.aws_account_id))
+    error_message = "AWS account ID must be a 12-digit number"
+  }
 }

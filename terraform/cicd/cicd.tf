@@ -23,32 +23,44 @@ resource "aws_iam_policy" "github_actions" {
           # CloudFront
           "cloudfront:Get*",
           "cloudfront:List*",
-          
+          "cloudfront:Create*",
+          "cloudfront:Delete*",
+          "cloudfront:TagResource",
           # DynamoDB - Terraform state locks + App Tables
           "dynamodb:*",
           
           # IAM
+          "iam:CreateRole",
           "iam:CreatePolicy",
           "iam:CreatePolicyVersion",
-          "iam:DeletePolicyVersion",
           "iam:Get*",
           "iam:List*",
           "iam:PassRole",
+          "iam:PutRolePolicy",
+          "iam:TagRole",
           
           # Lambda functions
+          "lambda:AddPermission",
+          "lambda:CreateAlias",
+          "lambda:CreateFunction",
           "lambda:Get*",
           "lambda:List*",
           "lambda:PublishVersion",
+          "lambda:TagResource",
+          "lambda:UpdateAlias",
           "lambda:UpdateFunction*",
           
           # S3 - Terraform state bucket + App buckets
-          "s3:DeleteObject",
+          "s3:Create*",
           "s3:Get*",
           "s3:List*",
+          "s3:PutBucketTagging",
+          "s3:PutEncryptionConfiguration",
           "s3:PutObject",
-
-          # EC2 - Network
-          "ec2:*"
+          "s3:PutBucketPublicAccessBlock",
+          "s3:PutBucketVersioning",
+          "s3:PutBucketPolicy",
+          "s3:PutBucketWebsite",
         ]
         Resource = [
           # Api Gateway
@@ -86,27 +98,6 @@ resource "aws_iam_policy" "github_actions" {
           # Website bucket
           "arn:aws:s3:::${data.terraform_remote_state.application.outputs.website_bucket_name}",
           "arn:aws:s3:::${data.terraform_remote_state.application.outputs.website_bucket_name}/*",
-          # EC2
-          # "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*",
-          # VPC
-          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:vpc/${data.terraform_remote_state.networking.outputs.vpc_id}",
-          # Subnets
-          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:subnet/${data.terraform_remote_state.networking.outputs.private_subnet_ids[0]}",
-          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:subnet/${data.terraform_remote_state.networking.outputs.private_subnet_ids[1]}",
-          # Security Groups
-          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:security-group/${data.terraform_remote_state.networking.outputs.lambda_security_group_id}",
-          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:security-group/${data.terraform_remote_state.networking.outputs.vpc_endpoint_security_group_id}",
-          # Route Tables
-          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:route-table/${data.terraform_remote_state.networking.outputs.private_route_table_ids[0]}",
-          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:route-table/${data.terraform_remote_state.networking.outputs.private_route_table_ids[1]}",
-          # VPC Endpoints
-          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:vpc-endpoint/${data.terraform_remote_state.networking.outputs.dynamodb_endpoint_id}",
-          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:vpc-endpoint/${data.terraform_remote_state.networking.outputs.s3_endpoint_id}",
-          # Availability Zones
-          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:availability-zone/${data.aws_region.current.name}a",
-          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:availability-zone/${data.aws_region.current.name}b",
-          # Tags
-          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:tag/${data.terraform_remote_state.networking.outputs.vpc_id}"
         ]
       },
       {
@@ -135,7 +126,7 @@ resource "aws_iam_policy" "github_actions" {
           "ec2:RevokeSecurityGroupEgress",
           "ec2:RevokeSecurityGroupIngress"
         ]
-        Resource = ["*"] # Required for EC2 actions
+        Resource = ["*"] # Required for EC2 network actions
         # Wasn't working - TODO: Fix
         # Condition = {
         #   StringEquals = {
