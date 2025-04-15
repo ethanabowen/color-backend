@@ -71,7 +71,7 @@ resource "aws_route_table_association" "private" {
 # Lambda SG: all outbound required for serverless
 # No ingress as Lambda is invoked by AWS services
 resource "aws_security_group" "lambda" {
-  name        = "color-service-lambda-sg"
+  name        = "${var.project_name}-lambda-sg"
   description = "Security group for Lambda functions"
   vpc_id      = aws_vpc.main.id
 
