@@ -39,7 +39,7 @@ variable "private_subnet_cidrs" {
 variable "availability_zones" {
   description = "Availability zones for subnets"
   type        = list(string)
-  default     = ["a", "b"]  # Just the suffix, we'll combine with region
+  default     = ["us-east-1a", "us-east-1b"]  # Just the suffix, we'll combine with region
 }
 
 variable "tags" {
