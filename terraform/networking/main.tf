@@ -134,11 +134,11 @@ resource "aws_route_table" "private" {
   count  = length(var.private_subnet_cidrs)
   vpc_id = aws_vpc.main.id
 
-  route {
-    # cidr_block     = "0.0.0.0/0"
-    # If we're in prod and this is the second subnet, use second NAT Gateway, otherwise use the first
-    # nat_gateway_id = count.index == 1 && var.environment == "prod" ? aws_nat_gateway.main[1].id : aws_nat_gateway.main[0].id
-  }
+  # route {
+  #   cidr_block     = "0.0.0.0/0"
+  #   # If we're in prod and this is the second subnet, use second NAT Gateway, otherwise use the first
+  #   nat_gateway_id = count.index == 1 && var.environment == "prod" ? aws_nat_gateway.main[1].id : aws_nat_gateway.main[0].id
+  # }
 
   tags = merge(
     local.common_tags,
