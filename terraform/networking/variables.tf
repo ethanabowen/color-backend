@@ -36,6 +36,13 @@ variable "private_subnet_cidrs" {
   default     = ["10.0.1.0/24", "10.0.2.0/24"]
 }
 
+# # Public subnet CIDRs for NAT Gateway
+# variable "public_subnet_cidrs" {
+#   description = "CIDR blocks for public subnets (for NAT Gateway)"
+#   type        = list(string)
+#   default     = ["10.0.101.0/24", "10.0.102.0/24"]  # Different range from private subnets
+# }
+
 variable "availability_zones" {
   description = "Availability zones for subnets"
   type        = list(string)

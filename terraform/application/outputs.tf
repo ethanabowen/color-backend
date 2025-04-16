@@ -79,12 +79,32 @@ output "cloudfront_response_headers_policy_id" {
   value       = aws_cloudfront_response_headers_policy.website.id
 }
 
-output "lambda_role_arn" {
+output "color_service_lambda_role_arn" {
   description = "ARN of the Lambda role"
-  value       = aws_iam_role.lambda_role.arn
+  value       = aws_iam_role.color_service_lambda_role.arn
 } 
+
+# output "auth_service_lambda_role_arn" {
+#   description = "ARN of the Lambda role"
+#   value       = aws_iam_role.auth_service_lambda_role.arn
+# } 
 
 output "api_gateway_cloudwatch_role_arn" {
   description = "ARN of the API Gateway CloudWatch role"
   value       = aws_iam_role.api_gateway_cloudwatch.arn
 }
+
+# output "cognito_user_pool_id" {
+#   description = "The ID of the Cognito User Pool"
+#     value       = aws_cognito_user_pool.user_pool.id
+# }
+
+# output "cognito_client_id" {
+#   description = "The ID of the Cognito User Pool Client"
+#   value       = aws_cognito_user_pool_client.client.id
+# }
+
+# output "cognito_domain" {
+#   description = "The domain of the Cognito User Pool"
+#   value       = aws_cognito_user_pool_domain.domain.domain
+# }

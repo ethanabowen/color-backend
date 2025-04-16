@@ -9,6 +9,29 @@ output "private_subnet_ids" {
   value       = aws_subnet.private[*].id
 }
 
+# # Public subnet IDs for internet access
+# output "public_subnet_ids" {
+#   description = "IDs of the public subnets"
+#   value       = aws_subnet.public[*].id
+# }
+
+# # NAT Gateway IDs for internet access
+# output "nat_gateway_ids" {
+#   description = "IDs of the NAT Gateways (1 for dev/test, 2 for prod)"
+#   value       = aws_nat_gateway.main[*].id
+# }
+
+# output "nat_gateway_count" {
+#   description = "Number of NAT Gateways deployed (1 for dev/test, 2 for prod)"
+#   value       = local.nat_gateway_count
+# }
+
+# # Internet Gateway ID for internet access
+# output "internet_gateway_id" {
+#   description = "ID of the Internet Gateway"
+#   value       = aws_internet_gateway.main.id
+# }
+
 # Lambda security group ID for function configuration
 output "lambda_security_group_id" {
   description = "ID of the Lambda security group"

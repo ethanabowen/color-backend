@@ -49,6 +49,15 @@ resource "aws_lambda_permission" "api_gateway" {
   source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
 }
 
+# # Auth Service Lambda Permission for API Gateway
+# resource "aws_lambda_permission" "auth_service" {
+#   statement_id  = "AllowAPIGatewayInvoke"
+#   action        = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.auth_service.function_name
+#   principal     = "apigateway.amazonaws.com"
+#   source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
+# }
+
 # CloudWatch logging for API Gateway
 resource "aws_api_gateway_account" "api" {
   cloudwatch_role_arn = aws_iam_role.api_gateway_cloudwatch.arn

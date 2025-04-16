@@ -1,8 +1,9 @@
 # Lambda Function
+# Color Service Lambda Function
 resource "aws_lambda_function" "color_service" {
   filename         = data.archive_file.color_service_zip.output_path
   function_name    = "${var.project_name}-${var.service_name}-${var.environment}"
-  role            = aws_iam_role.lambda_role.arn
+  role            = aws_iam_role.color_service_lambda_role.arn
   handler         = "functions/colorService/handler.handler"
   runtime         = "nodejs20.x"
   source_code_hash = data.archive_file.color_service_zip.output_base64sha256
@@ -26,12 +27,20 @@ resource "aws_lambda_function" "color_service" {
   tags = local.common_tags
 
   depends_on = [
-    aws_iam_role_policy.lambda_policy
+    aws_iam_role_policy.color_service_lambda_policy
   ]
 }
 
+# Lambda ZIP Archive
+data "archive_file" "color_service_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../dist"
+  output_path = "${path.module}/../../dist/${var.service_name}.zip"
+  excludes    = ["${var.service_name}.zip"]
+}
+
 # Lambda IAM Role
-resource "aws_iam_role" "lambda_role" {
+resource "aws_iam_role" "color_service_lambda_role" {
   name = "${var.project_name}-${var.service_name}-${var.environment}-lambda-role"
 
   assume_role_policy = jsonencode({
@@ -51,9 +60,9 @@ resource "aws_iam_role" "lambda_role" {
 }
 
 # Lambda IAM Policy
-resource "aws_iam_role_policy" "lambda_policy" {
+resource "aws_iam_role_policy" "color_service_lambda_policy" {
   name = "${var.project_name}-${var.service_name}-${var.environment}-lambda-policy"
-  role = aws_iam_role.lambda_role.id
+  role = aws_iam_role.color_service_lambda_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -108,10 +117,103 @@ resource "aws_iam_role_policy" "lambda_policy" {
   })
 }
 
-# Lambda ZIP Archive
-data "archive_file" "color_service_zip" {
-  type        = "zip"
-  source_dir  = "${path.module}/../../dist"
-  output_path = "${path.module}/../../dist/${var.service_name}.zip"
-  excludes    = ["${var.service_name}.zip"]
-}
+# # Auth Service Lambda Function
+# resource "aws_lambda_function" "auth_service" {
+#   filename         = "auth-service.zip"
+#   function_name    = "${var.project_name}-${var.environment}-auth-service"
+#   role             = aws_iam_role.auth_service_lambda_role.arn
+#   handler          = "auth_service.handler"
+#   source_code_hash = data.archive_file.auth_service_zip.output_base64sha256
+#   runtime          = "nodejs20.x"
+#   timeout          = 30
+#   memory_size      = 128
+
+#   environment {
+#     variables = {
+#       USER_POOL_ID = aws_cognito_user_pool.user_pool.id
+#       CLIENT_ID    = aws_cognito_user_pool_client.client.id
+#     }
+#   }
+
+#   tags = local.common_tags
+
+#   depends_on = [
+#     aws_iam_role_policy.auth_service_lambda_policy
+#   ]
+# }
+
+# # Lambda ZIP Archive
+# data "archive_file" "auth_service_zip" {
+#   type        = "zip"
+#   source_dir  = "${path.module}/../../dist"
+#   output_path = "${path.module}/../../dist/auth_service.zip"
+#   excludes    = ["auth_service.zip"]
+# }
+
+
+# # Lambda IAM Role
+# resource "aws_iam_role" "auth_service_lambda_role" {
+#   name = "${var.project_name}-auth-service-${var.environment}-lambda-role"
+
+#   assume_role_policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Action = "sts:AssumeRole"
+#         Effect = "Allow"
+#         Principal = {
+#           Service = "lambda.amazonaws.com"
+#         }
+#       }
+#     ]
+#   })
+
+#   tags = local.common_tags
+# }
+
+# # Lambda IAM Policy
+# resource "aws_iam_role_policy" "auth_service_lambda_policy" {
+#   name = "${var.project_name}-auth-service-${var.environment}-lambda-policy"
+#   role = aws_iam_role.color_service_lambda_role.id
+
+#   policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Effect = "Allow"
+#         Action = [
+#           "cognito-idp:*" # TODO: apply principal of least privilege
+#         ]
+#         Resource = [
+#           aws_cognito_user_pool.user_pool.arn,
+#           "${aws_cognito_user_pool.user_pool.arn}/*",
+#           aws_cognito_user_pool_client.client.arn,
+#           "${aws_cognito_user_pool_client.client.arn}/*"
+#         ]
+#       },
+#       {
+#         Effect = "Allow"
+#         Action = [
+#           "logs:CreateLogGroup",
+#           "logs:CreateLogStream",
+#           "logs:PutLogEvents"
+#         ]
+#         Resource = [
+#           # Building log group name to prevent circular dependency
+#           "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.project_name}-auth-service-${var.environment}:*"
+#         ]
+#       },
+#       {
+#         Effect = "Allow"
+#         Action = [
+#           "ec2:CreateNetworkInterface",
+#           "ec2:DescribeNetworkInterfaces",
+#           "ec2:DeleteNetworkInterface",
+#           "ec2:AssignPrivateIpAddresses",
+#           "ec2:UnassignPrivateIpAddresses"
+#         ]
+#         Resource = "*"
+#       }
+#     ]
+#   })
+#}

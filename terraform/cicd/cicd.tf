@@ -18,7 +18,7 @@ resource "aws_iam_policy" "github_actions" {
         Effect = "Allow"
         Action = [
           # AWS Gateway
-          "apigateway:*",
+          "apigateway:*", # TODO: apply principal of least privilege
           
           # CloudFront
           "cloudfront:Get*",
@@ -26,8 +26,12 @@ resource "aws_iam_policy" "github_actions" {
           "cloudfront:Create*",
           "cloudfront:Delete*",
           "cloudfront:TagResource",
+
+          # Cognito
+          "cognito-idp:*", # TODO: apply principal of least privilege
+
           # DynamoDB - Terraform state locks + App Tables
-          "dynamodb:*",
+          "dynamodb:*", # TODO: apply principal of least privilege
           
           # IAM
           "iam:CreateRole",
@@ -68,6 +72,11 @@ resource "aws_iam_policy" "github_actions" {
           "${data.terraform_remote_state.application.outputs.api_gateway_arn}/*",
           "arn:aws:execute-api:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${data.terraform_remote_state.application.outputs.api_gateway_id}/*",
           "arn:aws:apigateway:${data.aws_region.current.name}::/account",
+          # Cognito
+          data.terraform_remote_state.application.outputs.cognito_user_pool_arn,
+          "${data.terraform_remote_state.application.outputs.cognito_user_pool_arn}/*",
+          data.terraform_remote_state.application.outputs.cognito_client_id,
+          "${data.terraform_remote_state.application.outputs.cognito_client_id}/*",
           # CloudFront
           "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${data.terraform_remote_state.application.outputs.cloudfront_distribution_id}",
           "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:cache-policy/${data.terraform_remote_state.application.outputs.cloudfront_cache_policy_id}",
@@ -81,7 +90,8 @@ resource "aws_iam_policy" "github_actions" {
           aws_iam_user.frontend_ci.arn,
           # IAM resources
           data.terraform_remote_state.application.outputs.api_gateway_cloudwatch_role_arn,
-          data.terraform_remote_state.application.outputs.lambda_role_arn,
+          data.terraform_remote_state.application.outputs.color_service_lambda_role_arn,
+          data.terraform_remote_state.application.outputs.auth_service_lambda_role_arn,
           aws_iam_user.github_actions.arn,
           "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/github-actions-policy",
           # Lambda functions + role
@@ -103,28 +113,55 @@ resource "aws_iam_policy" "github_actions" {
       {
         Effect = "Allow"
         Action = [
-          # EC2 Actions (Alphabetized)
-          "ec2:AssociateRouteTable",
+          # VPC Management
+          "ec2:CreateVpc",
+          "ec2:DeleteVpc",
+          "ec2:ModifyVpcAttribute",
+          
+          # Subnet Management
+          "ec2:CreateSubnet",
+          "ec2:DeleteSubnet",
+          "ec2:ModifySubnetAttribute",
+          
+          # Security Group Management
+          "ec2:CreateSecurityGroup",
+          "ec2:DeleteSecurityGroup",
           "ec2:AuthorizeSecurityGroupEgress",
           "ec2:AuthorizeSecurityGroupIngress",
-          "ec2:CreateRouteTable",
-          "ec2:CreateSecurityGroup",
-          "ec2:CreateSubnet",
-          "ec2:CreateTags",
-          "ec2:CreateVpc",
-          "ec2:CreateVpcEndpoint",
-          "ec2:DeleteRouteTable",
-          "ec2:DeleteSecurityGroup",
-          "ec2:DeleteSubnet",
-          "ec2:DeleteVpc",
-          "ec2:DeleteVpcEndpoints",
-          "ec2:Describe*", # Read only actions
-          "ec2:DisassociateRouteTable",
-          "ec2:ModifySubnetAttribute",
-          "ec2:ModifyVpcAttribute",
-          "ec2:ModifyVpcEndpoint",
           "ec2:RevokeSecurityGroupEgress",
-          "ec2:RevokeSecurityGroupIngress"
+          "ec2:RevokeSecurityGroupIngress",
+          
+          # Route Table Management
+          "ec2:CreateRouteTable",
+          "ec2:DeleteRouteTable",
+          "ec2:CreateRoute",
+          "ec2:DeleteRoute",
+          "ec2:AssociateRouteTable",
+          "ec2:DisassociateRouteTable",
+          
+          # Internet Gateway Management
+          "ec2:CreateInternetGateway",
+          "ec2:DeleteInternetGateway",
+          "ec2:AttachInternetGateway",
+          "ec2:DetachInternetGateway",
+          
+          # NAT Gateway & Elastic IP Management
+          "ec2:CreateNatGateway",
+          "ec2:DeleteNatGateway",
+          "ec2:AllocateAddress",
+          "ec2:ReleaseAddress",
+          
+          # VPC Endpoint Management
+          "ec2:CreateVpcEndpoint",
+          "ec2:DeleteVpcEndpoints",
+          "ec2:ModifyVpcEndpoint",
+          
+          # Resource Tagging
+          "ec2:CreateTags",
+          "ec2:DeleteTags",
+          
+          # Read Operations (Describe)
+          "ec2:Describe*",
         ]
         Resource = ["*"] # Required for EC2 network actions
         # Wasn't working - TODO: Fix

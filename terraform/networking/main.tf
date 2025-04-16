@@ -11,6 +11,8 @@ locals {
   # Access keys will expire after 90 days
   access_key_expiration = timeadd(timestamp(), "2160h") # 90 days
   s3_origin_id = "${local.name_prefix}-website-origin"
+  # # Number of NAT Gateways: 1 for dev/test, 2 for prod
+  # nat_gateway_count = var.environment == "prod" ? 2 : 1
 }
 
 data "aws_region" "current" {}
@@ -29,6 +31,87 @@ resource "aws_vpc" "main" {
   )
 }
 
+# # Internet Gateway for public subnets
+# resource "aws_internet_gateway" "main" {
+#   vpc_id = aws_vpc.main.id
+
+#   tags = merge(
+#     local.common_tags,
+#     {
+#       Name = "${var.project_name}-igw"
+#     }
+#   )
+# }
+
+# # Public subnets for NAT Gateway
+# resource "aws_subnet" "public" {
+#   count             = length(var.public_subnet_cidrs)
+#   vpc_id            = aws_vpc.main.id
+#   cidr_block        = var.public_subnet_cidrs[count.index]
+#   availability_zone = var.availability_zones[count.index]
+  
+#   # Required for NAT Gateway
+#   map_public_ip_on_launch = true
+
+#   tags = merge(
+#     local.common_tags,
+#     {
+#       Name = "${var.project_name}-public-subnet-${count.index + 1}"
+#     }
+#   )
+# }
+
+# # NAT Gateway with Elastic IP
+# resource "aws_eip" "nat" {
+#   count  = local.nat_gateway_count
+#   domain = "vpc"
+#   tags = merge(
+#     local.common_tags,
+#     {
+#       Name = "${var.project_name}-nat-eip-${count.index + 1}"
+#     }
+#   )
+# }
+
+# resource "aws_nat_gateway" "main" {
+#   count         = local.nat_gateway_count
+#   allocation_id = aws_eip.nat[count.index].id
+#   subnet_id     = aws_subnet.public[count.index].id
+
+#   tags = merge(
+#     local.common_tags,
+#     {
+#       Name = "${var.project_name}-nat-${count.index + 1}"
+#     }
+#   )
+
+#   depends_on = [aws_internet_gateway.main]
+# }
+
+# # Public Route Table
+# resource "aws_route_table" "public" {
+#   vpc_id = aws_vpc.main.id
+
+#   route {
+#     cidr_block = "0.0.0.0/0"
+#     gateway_id = aws_internet_gateway.main.id
+#   }
+
+#   tags = merge(
+#     local.common_tags,
+#     {
+#       Name = "${var.project_name}-public-rt"
+#     }
+#   )
+# }
+
+# # Associate public subnets with public route table
+# resource "aws_route_table_association" "public" {
+#   count          = length(var.public_subnet_cidrs)
+#   subnet_id      = aws_subnet.public[count.index].id
+#   route_table_id = aws_route_table.public.id
+# }
+
 # Private subnets in multi-AZ for high availability
 # No public IPs to minimize attack surface
 resource "aws_subnet" "private" {
@@ -46,10 +129,16 @@ resource "aws_subnet" "private" {
 }
 
 # Explicit route tables for better control and auditability
-# Required for VPC endpoint routing
+# Add route through NAT Gateway for internet access
 resource "aws_route_table" "private" {
   count  = length(var.private_subnet_cidrs)
   vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    # If we're in prod and this is the second subnet, use second NAT Gateway, otherwise use the first
+    # nat_gateway_id = count.index == 1 && var.environment == "prod" ? aws_nat_gateway.main[1].id : aws_nat_gateway.main[0].id
+  }
 
   tags = merge(
     local.common_tags,
@@ -61,7 +150,6 @@ resource "aws_route_table" "private" {
 
 # Route Table Associations
 # Associates each private subnet with its corresponding route table
-# This ensures proper routing for each subnet
 resource "aws_route_table_association" "private" {
   count          = length(var.private_subnet_cidrs)
   subnet_id      = aws_subnet.private[count.index].id
@@ -71,7 +159,7 @@ resource "aws_route_table_association" "private" {
 # Lambda SG: all outbound required for serverless
 # No ingress as Lambda is invoked by AWS services
 resource "aws_security_group" "lambda" {
-  name        = "${var.project_name}-lambda-sg"
+  name        = "color-lambda-sg"
   description = "Security group for Lambda functions"
   vpc_id      = aws_vpc.main.id
 
@@ -94,7 +182,7 @@ resource "aws_security_group" "lambda" {
 # VPC Endpoint SG: HTTPS only from Lambda
 # Gateway endpoints don't need security groups, but we add them for consistency
 resource "aws_security_group" "vpc_endpoint" {
-  name        = "${var.project_name}-vpc-endpoint-sg"
+  name        = "color-vpc-endpoint-sg"
   description = "Security group for VPC endpoints"
   vpc_id      = aws_vpc.main.id
 
