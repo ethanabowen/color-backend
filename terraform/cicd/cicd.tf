@@ -28,7 +28,7 @@ resource "aws_iam_policy" "github_actions" {
           "cloudfront:TagResource",
 
           # Cognito
-          "cognito-idp:*", # TODO: apply principal of least privilege
+          # "cognito-idp:*", # TODO: apply principal of least privilege
 
           # DynamoDB - Terraform state locks + App Tables
           "dynamodb:*", # TODO: apply principal of least privilege
@@ -73,10 +73,10 @@ resource "aws_iam_policy" "github_actions" {
           "arn:aws:execute-api:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${data.terraform_remote_state.application.outputs.api_gateway_id}/*",
           "arn:aws:apigateway:${data.aws_region.current.name}::/account",
           # Cognito
-          data.terraform_remote_state.application.outputs.cognito_user_pool_arn,
-          "${data.terraform_remote_state.application.outputs.cognito_user_pool_arn}/*",
-          data.terraform_remote_state.application.outputs.cognito_client_id,
-          "${data.terraform_remote_state.application.outputs.cognito_client_id}/*",
+          # data.terraform_remote_state.application.outputs.cognito_user_pool_arn,
+          # "${data.terraform_remote_state.application.outputs.cognito_user_pool_arn}/*",
+          # data.terraform_remote_state.application.outputs.cognito_client_id,
+          # "${data.terraform_remote_state.application.outputs.cognito_client_id}/*",
           # CloudFront
           "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${data.terraform_remote_state.application.outputs.cloudfront_distribution_id}",
           "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:cache-policy/${data.terraform_remote_state.application.outputs.cloudfront_cache_policy_id}",
