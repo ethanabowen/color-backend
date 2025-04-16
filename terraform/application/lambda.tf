@@ -11,6 +11,8 @@ resource "aws_lambda_function" "color_service" {
   memory_size     = 128
   publish         = true
 
+  kms_key_arn = data.aws_kms_alias.lambda.target_key_arn
+
   vpc_config {
     subnet_ids         = data.terraform_remote_state.networking.outputs.private_subnet_ids
     security_group_ids = [data.terraform_remote_state.networking.outputs.lambda_security_group_id]
@@ -57,6 +59,11 @@ resource "aws_iam_role" "color_service_lambda_role" {
   })
 
   tags = local.common_tags
+}
+
+# KMS Key Data Source
+data "aws_kms_alias" "lambda" {
+  name = "alias/aws/lambda"
 }
 
 # Lambda IAM Policy
@@ -112,15 +119,6 @@ resource "aws_iam_role_policy" "color_service_lambda_policy" {
           "ec2:UnassignPrivateIpAddresses"
         ]
         Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "kms:Decrypt"
-        ]
-        Resource = [
-          "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:alias/aws/lambda"
-        ]
       }
     ]
   })
@@ -132,20 +130,28 @@ resource "aws_iam_role_policy" "color_service_lambda_policy" {
 #   function_name    = "${var.project_name}-${var.environment}-auth-service"
 #   role             = aws_iam_role.auth_service_lambda_role.arn
 #   handler          = "auth_service.handler"
-#   source_code_hash = data.archive_file.auth_service_zip.output_base64sha256
 #   runtime          = "nodejs20.x"
+#   source_code_hash = data.archive_file.auth_service_zip.output_base64sha256
 #   timeout          = 30
 #   memory_size      = 128
-
+#   publish         = true
+#
+#   kms_key_arn = data.aws_kms_alias.lambda.target_key_arn
+#
+#   vpc_config {
+#     subnet_ids         = data.terraform_remote_state.networking.outputs.private_subnet_ids
+#     security_group_ids = [data.terraform_remote_state.networking.outputs.lambda_security_group_id]
+#   }
+# 
 #   environment {
 #     variables = {
 #       USER_POOL_ID = aws_cognito_user_pool.user_pool.id
 #       CLIENT_ID    = aws_cognito_user_pool_client.client.id
 #     }
 #   }
-
+#
 #   tags = local.common_tags
-
+#
 #   depends_on = [
 #     aws_iam_role_policy.auth_service_lambda_policy
 #   ]
