@@ -37,6 +37,7 @@ resource "aws_iam_policy" "github_actions" {
           "iam:CreateRole",
           "iam:CreatePolicy",
           "iam:CreatePolicyVersion",
+          "iam:DeletePolicyVersion",
           "iam:Get*",
           "iam:List*",
           "iam:PassRole",
