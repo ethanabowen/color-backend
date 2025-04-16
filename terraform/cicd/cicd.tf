@@ -91,7 +91,7 @@ resource "aws_iam_policy" "github_actions" {
           # IAM resources
           data.terraform_remote_state.application.outputs.api_gateway_cloudwatch_role_arn,
           data.terraform_remote_state.application.outputs.color_service_lambda_role_arn,
-          data.terraform_remote_state.application.outputs.auth_service_lambda_role_arn,
+          # data.terraform_remote_state.application.outputs.auth_service_lambda_role_arn,
           aws_iam_user.github_actions.arn,
           "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/github-actions-policy",
           # Lambda functions + role
