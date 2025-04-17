@@ -43,7 +43,10 @@ resource "aws_iam_policy" "github_actions" {
           "iam:PassRole",
           "iam:PutRolePolicy",
           "iam:TagRole",
-          
+
+          # KMS
+          "kms:DescribeKey",
+
           # Lambda functions
           "lambda:AddPermission",
           "lambda:CreateAlias",
@@ -95,6 +98,8 @@ resource "aws_iam_policy" "github_actions" {
           # data.terraform_remote_state.application.outputs.auth_service_lambda_role_arn,
           aws_iam_user.github_actions.arn,
           "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/github-actions-policy",
+          # KMS
+          data.aws_kms_alias.lambda.target_key_arn,
           # Lambda functions + role
           data.terraform_remote_state.application.outputs.color_service_function_arn,
           "${data.terraform_remote_state.application.outputs.color_service_function_arn}:*",
@@ -163,8 +168,11 @@ resource "aws_iam_policy" "github_actions" {
           
           # Read Operations (Describe)
           "ec2:Describe*",
+          
+          # KMS
+          "kms:ListAliases",
         ]
-        Resource = ["*"] # Required for EC2 network actions
+        Resource = ["*"] # Required for EC2 network and KMS actions
         # Wasn't working - TODO: Fix
         # Condition = {
         #   StringEquals = {
